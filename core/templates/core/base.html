@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>МИТ Портал</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/htmx.org@1.9.12"></script>
+    <style>
+      .search-results { position: absolute; background: #fff; width: 100%; z-index: 1000; border: 1px solid #ddd; border-top: none; border-radius: 0 0 .375rem .375rem; }
+      .search-results a { display: block; padding: 8px 12px; text-decoration: none; color: #333; }
+      .search-results a:hover { background: #f8f9fa; }
+      .notif-badge { font-size: 0.65rem; position: absolute; top: -5px; right: -5px; }
+    </style>
+</head>
+<body class="bg-light">
+  <nav class="navbar navbar-dark bg-primary mb-4">
+    <div class="container">
+      <a class="navbar-brand" href="{% url 'dashboard' %}">🏥 Отдел МИТ</a>
+      {% if user.is_authenticated %}
+        <div class="d-flex align-items-center gap-3">
+          <!-- 🔍 Поиск -->
+          <div class="position-relative">
+            <input type="text" id="searchInput" class="form-control form-control-sm" placeholder="🔍 ФИО или отдел..." 
+                   hx-get="{% url 'api_search' %}" hx-trigger="input changed delay:300ms, search" hx-target="#searchResults" hx-params="q">
+            <div id="searchResults" class="search-results d-none"></div>
+          </div>
+          
+          <!-- 🔔 Колокольчик -->
+          <a href="{% url 'notifications' %}" class="position-relative text-white" title="Уведомления">
+            🔔
+            {% with unread=user.inappnotification_set.filter.is_read.count %}
+              {% if unread %}
+                <span class="badge bg-danger rounded-pill notif-badge">{{ unread }}</span>
+              {% endif %}
+            {% endwith %}
+          </a>
+          
+          <div class="dropdown">
+            <a class="text-white dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+              👤 {{ user.get_full_name|default:user.username }}
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li><a class="dropdown-item" href="{% url 'profile' %}">Настройки</a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li>
+                <form action="{% url 'logout' %}" method="post">{% csrf_token %}
+                  <button class="dropdown-item">Выйти</button>
+                </form>
+              </li>
+            </ul>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  </nav>
+
+  <div class="container">
+    {% if user.is_authenticated %}
+      <div class="row mb-4">
+        <div class="col-md-3">
+          <div class="list-group">
+            <a href="{% url 'directory' %}" class="list-group-item list-group-item-action">👥 Сотрудники</a>
+            <a href="{% url 'announcements' %}" class="list-group-item list-group-item-action">📢 Оповещения</a>
+            <a href="{% url 'calendar' %}" class="list-group-item list-group-item-action">📅 Календарь</a>
+            <a href="{% url 'absences' %}" class="list-group-item list-group-item-action">📋 Отсутствующие</a>
+            {% if user.role in 'adm,sup,sid' %}     
+              <a href="{% url 'announcement_create' %}" class="list-group-item list-group-item-action">📤 Создать оповещение</a>
+            {% endif %}
+            <a href="{% url 'absence_report' %}" class="list-group-item list-group-item-action">📝 Уведомить об отсутствии</a>
+            <a href="{% url 'ticket_list' %}" class="list-group-item list-group-item-action">🆘 Заявки в IT</a>
+          </div>
+        </div>
+        <div class="col-md-9">
+          {% block content %}{% endblock %}
+        </div>
+      </div>
+    {% else %}
+      {% block public_content %}{% endblock %}
+    {% endif %}
+  </div>
+
+  <script>
+    // Показ/скрытие результатов поиска
+    document.getElementById('searchInput')?.addEventListener('htmx:afterRequest', function(evt) {
+      const res = document.getElementById('searchResults');
+      res.classList.toggle('d-none', !evt.detail.xhr.responseText.trim());
+    });
+    // Форматируем ответ поиска в HTML
+    document.getElementById('searchInput')?.addEventListener('htmx:afterOnLoad', function(evt) {
+      const data = JSON.parse(evt.detail.xhr.responseText);
+      const res = document.getElementById('searchResults');
+      res.innerHTML = data.map(u => 
+        `<a href="/directory/?q=${u.last_name}+${u.first_name}">${u.last_name} ${u.first_name} <small class="text-muted">(${u.department})</small></a>`
+      ).join('');
+    });
+  </script>
+  <script>
+  // 🔐 Автоматическая подстановка CSRF-токена для HTMX
+  document.body.addEventListener('htmx:configRequest', (event) => {
+    event.detail.headers['X-CSRFToken'] = '{{ csrf_token }}';
+  });
+
+  // 🔍 Поиск сотрудников (ваш существующий код)
+  const searchInput = document.getElementById('searchInput');
+  if (searchInput) {
+    searchInput.addEventListener('htmx:afterRequest', function(evt) {
+      const res = document.getElementById('searchResults');
+      res.classList.toggle('d-none', !evt.detail.xhr.responseText.trim());
+    });
+    searchInput.addEventListener('htmx:afterOnLoad', function(evt) {
+      try {
+        const data = JSON.parse(evt.detail.xhr.responseText);
+        const res = document.getElementById('searchResults');
+        res.innerHTML = data.map(u => 
+          `<a href="/directory/?q=${encodeURIComponent(u.last_name + ' ' + u.first_name)}">${u.last_name} ${u.first_name} <small class="text-muted">(${u.department})</small></a>`
+        ).join('');
+      } catch(e) {}
+    });
+  }
+</script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

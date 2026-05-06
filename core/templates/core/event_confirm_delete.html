@@ -1,0 +1,14 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<div class="card">
+  <div class="card-header bg-danger text-white">⚠️ Подтверждение удаления</div>
+  <div class="card-body">
+    <p>Вы действительно хотите удалить событие <strong>"{{ object.title }}"</strong>?</p>
+    <form method="post">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger">Да, удалить</button>
+      <a href="{% url 'calendar' %}" class="btn btn-secondary">Отмена</a>
+    </form>
+  </div>
+</div>
+{% endblock %}

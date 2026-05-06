@@ -1,0 +1,35 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<h3>👥 Сотрудники отдела МИТ</h3>
+
+<form method="get" class="mb-3">
+  <div class="input-group">
+    <input type="text" name="q" class="form-control" placeholder="🔍 Поиск по ФИО или отделу..." value="{{ request.GET.q }}">
+    <button class="btn btn-primary">Найти</button>
+    {% if request.GET.q %}
+      <a href="{% url 'directory' %}" class="btn btn-outline-secondary">Сбросить</a>
+    {% endif %}
+  </div>
+</form>
+
+<div class="list-group">
+  {% for emp in employees %}
+    <div class="list-group-item">
+      <div class="d-flex w-100 justify-content-between">
+        <h5 class="mb-1">{{ emp.last_name }} {{ emp.first_name }}</h5>
+        <small class="text-muted">{{ emp.get_role_display }}</small>
+      </div>
+      <p class="mb-1">
+        <strong>Отдел:</strong> {{ emp.get_department_display }} | 
+        <strong>Кабинет:</strong> {{ emp.office|default:"—" }}
+      </p>
+      <small>
+        📞 {{ emp.phone_external|default:"—" }} | 
+        🔹 {{ emp.phone_internal|default:"—" }}
+      </small>
+    </div>
+  {% empty %}
+    <div class="list-group-item text-muted">Сотрудники не найдены</div>
+  {% endfor %}
+</div>
+{% endblock %}

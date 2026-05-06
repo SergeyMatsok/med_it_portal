@@ -1,0 +1,21 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<h3>📋 Сейчас отсутствуют</h3>
+
+<div class="list-group">
+  {% for record in absences %}
+    <div class="list-group-item">
+      <h5 class="mb-1">{{ record.employee.last_name }} {{ record.employee.first_name }}</h5>
+      <p class="mb-1">
+        <strong>Причина:</strong> {{ record.get_reason_display }}
+        {% if record.custom_reason %} — {{ record.custom_reason }}{% endif %}
+      </p>
+      <small class="text-muted">
+        📅 {{ record.start_dt|date:"d.m.Y" }} — {{ record.end_dt|date:"d.m.Y" }}
+      </small>
+    </div>
+  {% empty %}
+    <div class="list-group-item text-muted">Все сотрудники на месте ✓</div>
+  {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3>📢 Оповещения</h3>
+  {% if user.role in 'adm,sup,sid' %}
+    <a href="{% url 'announcement_create' %}" class="btn btn-primary">+ Создать</a>
+  {% endif %}
+</div>
+
+{% for ann in announcements %}
+  <div class="card mb-3">
+    <div class="card-body">
+      <p class="card-text">{{ ann.text }}</p>
+      <small class="text-muted">
+        {{ ann.created_at|date:"d.m.Y H:i" }} | 
+        {{ ann.get_scope_display }}
+        {% if ann.scope == 'dept' %} → {{ ann.get_department_display }}{% endif %}
+      </small>
+    </div>
+  </div>
+{% empty %}
+  <div class="alert alert-info">Нет новых оповещений</div>
+{% endfor %}
+{% endblock %}

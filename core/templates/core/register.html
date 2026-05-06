@@ -1,0 +1,84 @@
+{% extends 'core/base.html' %}
+{% block public_content %}
+<div class="row justify-content-center mt-4">
+  <div class="col-md-7">
+    <div class="card shadow">
+      <div class="card-header bg-success text-white">
+        <h4 class="mb-0">📝 Регистрация сотрудника</h4>
+      </div>
+      <div class="card-body">
+        <form method="post">
+          {% csrf_token %}
+          {% if form.errors %}
+            <div class="alert alert-danger">
+              {% for field in form %}
+                {% for error in field.errors %}
+                  <div>{{ error }}</div>
+                {% endfor %}
+              {% endfor %}
+              {% for error in form.non_field_errors %}
+                <div>{{ error }}</div>
+              {% endfor %}
+            </div>
+          {% endif %}
+          
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Логин *</label>
+              {{ form.username }}
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Подразделение</label>
+              {{ form.department }}
+            </div>
+          </div>
+          
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Имя *</label>
+              {{ form.first_name }}
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Фамилия *</label>
+              {{ form.last_name }}
+            </div>
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label">Внешний телефон</label>
+            {{ form.phone_external }}
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Внутренний телефон</label>
+            {{ form.phone_internal }}
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Дата рождения</label>
+            {{ form.birth_date }}
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Кабинет</label>
+            {{ form.office }}
+          </div>
+          
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Пароль *</label>
+              {{ form.password1 }}
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Подтверждение пароля *</label>
+              {{ form.password2 }}
+            </div>
+          </div>
+          
+          <button type="submit" class="btn btn-success w-100">Зарегистрироваться</button>
+        </form>
+        <div class="text-center mt-3">
+          <small>Уже есть аккаунт? <a href="{% url 'login' %}">Войти</a></small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

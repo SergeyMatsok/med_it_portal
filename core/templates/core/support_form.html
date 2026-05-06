@@ -1,0 +1,17 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<h3>🆘 Написать в техническую поддержку</h3>
+
+<form method="post" class="mt-4">
+  {% csrf_token %}
+  <div class="mb-3">
+    <label class="form-label">Ваше сообщение</label>
+    {{ form.message }}
+    {% if form.message.errors %}
+      <div class="text-danger small">{{ form.message.errors.0 }}</div>
+    {% endif %}
+  </div>
+  <button type="submit" class="btn btn-primary">Отправить</button>
+  <a href="{% url 'dashboard' %}" class="btn btn-secondary">Отмена</a>
+</form>
+{% endblock %}

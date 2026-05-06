@@ -1,0 +1,79 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<div class="card mb-3">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h5 class="mb-0">🆘 Заявка #{{ ticket.id }}</h5>
+    <span class="badge bg-{% if ticket.status == 'new' %}primary{% elif ticket.status == 'in_progress' %}warning{% elif ticket.status == 'resolved' %}success{% else %}secondary{% endif %}">
+      {{ ticket.get_status_display }}
+    </span>
+  </div>
+  <div class="card-body">
+    <p><strong>Автор:</strong> {{ ticket.author }} ({{ ticket.author.department|default:"Не указан" }})</p>
+    <p><strong>Создана:</strong> {{ ticket.created_at|date:"d.m.Y H:i" }}</p>
+    <div class="bg-light p-3 rounded mb-3" style="white-space: pre-wrap;">{{ ticket.message }}</div>
+    {% if ticket.assigned_to %}<p class="text-muted small">👤 Исполнитель: {{ ticket.assigned_to }}</p>{% endif %}
+  </div>
+</div>
+
+<h5 class="mt-4">💬 История и ответы</h5>
+<div class="list-group mb-3">
+  {% for reply in ticket.replies.all %}
+    <div class="list-group-item {% if reply.author.role in 'adm,sup' %}list-group-item-info{% endif %}">
+      <div class="d-flex w-100 justify-content-between">
+        <h6 class="mb-1">{{ reply.author }} 
+          {% if reply.author == ticket.author %}<small class="text-muted">(Автор)</small>
+          {% else %}<small class="text-muted">(IT/Админ)</small>{% endif %}
+        </h6>
+        <small class="text-muted">{{ reply.created_at|date:"d.m.Y H:i" }}</small>
+      </div>
+      <p class="mb-1" style="white-space: pre-wrap;">{{ reply.message }}</p>
+    </div>
+  {% empty %}
+    <div class="list-group-item text-muted">Пока нет ответов</div>
+  {% endfor %}
+</div>
+
+{% if user.role in 'adm,sup' or user == ticket.author %}
+<div class="card">
+  <div class="card-header">📝 Действия</div>
+  <div class="card-body">
+    <form method="post">
+      {% csrf_token %}
+      <div class="mb-3">
+        <label class="form-label">Ответить</label>
+        <textarea name="reply" class="form-control" rows="3" placeholder="Напишите ответ или комментарий..."></textarea>
+      </div>
+      {% if user.role in 'adm,sup' %}
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <label class="form-label">Изменить статус</label>
+          <select name="status" class="form-select">
+            <option value="new" {% if ticket.status == 'new' %}selected{% endif %}>🆕 Новая</option>
+            <option value="in_progress" {% if ticket.status == 'in_progress' %}selected{% endif %}>🔧 В работе</option>
+            <option value="resolved" {% if ticket.status == 'resolved' %}selected{% endif %}>✅ Решена</option>
+            <option value="closed" {% if ticket.status == 'closed' %}selected{% endif %}>📁 Закрыта</option>
+          </select>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Назначить исполнителя</label>
+            <select name="assigned_to" class="form-select">
+                <option value="">-- Не выбран --</option>
+                {% for emp in potential_assignees %}
+                    <option value="{{ emp.id }}" 
+                        {% if ticket.assigned_to and ticket.assigned_to.id == emp.id %}selected{% endif %}>
+                        {{ emp.get_full_name|default:emp.username }} ({{ emp.get_role_display }})
+                    </option>
+                {% empty %}
+                    <option value="">Нет доступных исполнителей</option>
+                {% endfor %}
+            </select>
+        </div>
+      </div>
+      {% endif %}
+      <button type="submit" class="btn btn-primary">Отправить</button>
+      <a href="{% url 'ticket_list' %}" class="btn btn-secondary">Назад к списку</a>
+    </form>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

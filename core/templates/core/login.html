@@ -1,0 +1,33 @@
+{% extends 'core/base.html' %}
+{% block public_content %}
+<div class="row justify-content-center mt-5">
+  <div class="col-md-5">
+    <div class="card shadow">
+      <div class="card-header bg-primary text-white text-center">
+        <h4 class="mb-0">🏥 Вход в МИТ Портал</h4>
+      </div>
+      <div class="card-body">
+        <form method="post">
+          {% csrf_token %}
+          {% if form.errors %}
+            <div class="alert alert-danger">Неверный логин или пароль</div>
+          {% endif %}
+          <div class="mb-3">
+            <label class="form-label">Логин</label>
+            <input type="text" name="username" class="form-control" required autofocus>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Пароль</label>
+            <input type="password" name="password" class="form-control" required>
+          </div>
+          <button type="submit" class="btn btn-primary w-100">Войти</button>
+        </form>
+        <hr>
+        <div class="text-center">
+          <small>Нет аккаунта? <a href="{% url 'register' %}">Зарегистрироваться</a></small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
