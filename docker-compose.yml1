@@ -1,0 +1,24 @@
+version: "3.3"
+services:
+  web:
+    image: mit-web
+    container_name: mit-web
+    command: >
+      bash -c "
+        python manage.py migrate &&
+        python manage.py collectstatic --noinput &&
+        cron &&
+        exec python -m gunicorn --bind 0.0.0.0:8000 --workers 3 --access-logfile - --error-logfile - med_it_portal.wsgi:application
+      "
+    restart: unless-stopped
+    volumes:
+      - ./media:/app/media
+      - ./data:/app/data
+      - static_volume:/app/staticfiles
+    env_file:
+      - .env
+    ports:
+      - "8889:8000"
+
+volumes:
+  static_volume:

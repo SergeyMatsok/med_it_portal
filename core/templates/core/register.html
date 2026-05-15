@@ -1,84 +1,240 @@
 {% extends 'core/base.html' %}
+{% load static %}
+
 {% block public_content %}
-<div class="row justify-content-center mt-4">
-  <div class="col-md-7">
-    <div class="card shadow">
-      <div class="card-header bg-success text-white">
-        <h4 class="mb-0">📝 Регистрация сотрудника</h4>
-      </div>
-      <div class="card-body">
-        <form method="post">
-          {% csrf_token %}
-          {% if form.errors %}
-            <div class="alert alert-danger">
-              {% for field in form %}
-                {% for error in field.errors %}
-                  <div>{{ error }}</div>
-                {% endfor %}
-              {% endfor %}
-              {% for error in form.non_field_errors %}
-                <div>{{ error }}</div>
-              {% endfor %}
+<div class="min-vh-100 d-flex align-items-center justify-content-center py-5" 
+
+  
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-md-8 col-lg-6">
+        
+        <!-- Карточка регистрации -->
+        <div class="card shadow-lg border-0 rounded-4">
+          <div class="card-body p-4 p-md-5">
+            
+            <!-- Заголовок -->
+            <div class="text-center mb-4">
+              <div class="mb-3">
+                <i class="bi bi-hospital" style="font-size: 3rem; color: #667eea;"></i>
+              </div>
+              <h2 class="fw-bold mb-2">Регистрация в системе</h2>
+              <p class="text-muted">МИТ Портал • ВМедА им. С.М. Кирова</p>
             </div>
-          {% endif %}
-          
-          <div class="row">
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Логин *</label>
-              {{ form.username }}
-            </div>
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Подразделение</label>
-              {{ form.department }}
-            </div>
+
+            <!-- Форма -->
+            <form method="post" novalidate>
+              {% csrf_token %}
+              
+              <!-- Личные данные -->
+              <h6 class="text-uppercase text-muted mb-3 fw-bold" style="font-size: 0.75rem; letter-spacing: 0.5px;">
+                👤 Личные данные
+              </h6>
+              
+              <div class="row mb-3">
+                <div class="col-md-4 mb-2 mb-md-0">
+                  <label class="form-label small fw-semibold">Фамилия <span class="text-danger">*</span></label>
+                  {{ form.last_name }}
+                  {% if form.last_name.errors %}
+                    <div class="text-danger small mt-1">{{ form.last_name.errors.0 }}</div>
+                  {% endif %}
+                </div>
+                <div class="col-md-4 mb-2 mb-md-0">
+                  <label class="form-label small fw-semibold">Имя <span class="text-danger">*</span></label>
+                  {{ form.first_name }}
+                  {% if form.first_name.errors %}
+                    <div class="text-danger small mt-1">{{ form.first_name.errors.0 }}</div>
+                  {% endif %}
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label small fw-semibold">Отчество</label>
+                  {{ form.patronymic }}
+                  {% if form.patronymic.errors %}
+                    <div class="text-danger small mt-1">{{ form.patronymic.errors.0 }}</div>
+                  {% endif %}
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label small fw-semibold">Логин <span class="text-danger">*</span></label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-person"></i></span>
+                  {{ form.username }}
+                </div>
+                {% if form.username.errors %}
+                  <div class="text-danger small mt-1">{{ form.username.errors.0 }}</div>
+                {% endif %}
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label small fw-semibold">Email <span class="text-danger">*</span></label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                  {{ form.email }}
+                </div>
+                {% if form.email.errors %}
+                  <div class="text-danger small mt-1">{{ form.email.errors.0 }}</div>
+                {% endif %}
+              </div>
+
+              <!-- Пароль -->
+              <h6 class="text-uppercase text-muted mb-3 mt-4 fw-bold" style="font-size: 0.75rem; letter-spacing: 0.5px;">
+                🔐 Безопасность
+              </h6>
+
+              <div class="mb-3">
+                <label class="form-label small fw-semibold">Пароль <span class="text-danger">*</span></label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                  {{ form.password1 }}
+                </div>
+                {% if form.password1.errors %}
+                  <div class="text-danger small mt-1">{{ form.password1.errors.0 }}</div>
+                {% endif %}
+              </div>
+
+              <div class="mb-4">
+                <label class="form-label small fw-semibold">Подтверждение пароля <span class="text-danger">*</span></label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
+                  {{ form.password2 }}
+                </div>
+                {% if form.password2.errors %}
+                  <div class="text-danger small mt-1">{{ form.password2.errors.0 }}</div>
+                {% endif %}
+              </div>
+
+              <!-- Работа -->
+              <h6 class="text-uppercase text-muted mb-3 mt-4 fw-bold" style="font-size: 0.75rem; letter-spacing: 0.5px;">
+                💼 Информация о работе
+              </h6>
+
+              <div class="mb-3">
+                <label class="form-label small fw-semibold">Подразделение</label>
+                {{ form.department }}
+                {% if form.department.errors %}
+                  <div class="text-danger small mt-1">{{ form.department.errors.0 }}</div>
+                {% endif %}
+              </div>
+
+              <div class="row mb-3">
+                <div class="col-md-4 mb-2 mb-md-0">
+                  <label class="form-label small fw-semibold">Кабинет</label>
+                  {{ form.office }}
+                </div>
+                <div class="col-md-4 mb-2 mb-md-0">
+                  <label class="form-label small fw-semibold">Внутр. телефон</label>
+                  {{ form.phone_internal }}
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label small fw-semibold">Внеш. телефон</label>
+                  {{ form.phone_external }}
+                </div>
+              </div>
+
+              <div class="row mb-4">
+                <div class="col-md-6 mb-2 mb-md-0">
+                  <label class="form-label small fw-semibold">Дата рождения</label>
+                  {{ form.birth_date }}
+                </div>
+
+              <!-- Кнопки -->
+              <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-primary btn-lg">
+                  <i class="bi bi-check-circle me-2"></i>Зарегистрироваться
+                </button>
+              </div>
+
+              <!-- Ссылка на вход -->
+              <div class="text-center mt-3">
+                <p class="mb-0 text-muted small">
+                  Уже есть аккаунт? 
+                  <a href="{% url 'login' %}" class="text-decoration-none fw-semibold">Войти</a>
+                </p>
+              </div>
+
+              <div class="text-center mt-3">
+                <p class="mb-0 text-muted small">
+                  Нет аккаунта? 
+                  <a href="{% url 'register' %}" class="text-decoration-none fw-semibold">Зарегистрироваться</a>
+                </p>
+              </div>
+
+            </form>
           </div>
-          
-          <div class="row">
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Имя *</label>
-              {{ form.first_name }}
-            </div>
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Фамилия *</label>
-              {{ form.last_name }}
-            </div>
-          </div>
-          
-          <div class="mb-3">
-            <label class="form-label">Внешний телефон</label>
-            {{ form.phone_external }}
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Внутренний телефон</label>
-            {{ form.phone_internal }}
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Дата рождения</label>
-            {{ form.birth_date }}
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Кабинет</label>
-            {{ form.office }}
-          </div>
-          
-          <div class="row">
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Пароль *</label>
-              {{ form.password1 }}
-            </div>
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Подтверждение пароля *</label>
-              {{ form.password2 }}
-            </div>
-          </div>
-          
-          <button type="submit" class="btn btn-success w-100">Зарегистрироваться</button>
-        </form>
-        <div class="text-center mt-3">
-          <small>Уже есть аккаунт? <a href="{% url 'login' %}">Войти</a></small>
         </div>
+
+        <!-- Футер -->
+        <div class="text-center mt-4">
+          <p class="text-white-50 small mb-0">
+            © 2026 ВМедА им. С.М. Кирова<br>
+            Отдел медицинских информационных технологий
+          </p>
+        </div>
+
       </div>
     </div>
   </div>
 </div>
+
+<style>
+  /* Стили для полей формы */
+  .form-control, .form-select {
+    border-radius: 0.375rem;
+    border: 1px solid #dee2e6;
+    padding: 0.625rem 0.875rem;
+    font-size: 0.95rem;
+  }
+  
+  .form-control:focus, .form-select:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.15);
+  }
+  
+  .input-group-text {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-right: none;
+    color: #667eea;
+  }
+  
+  .input-group .form-control {
+    border-left: none;
+  }
+  
+  .input-group .form-control:focus {
+    border-left: none;
+  }
+  
+  .btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    padding: 0.875rem;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+  }
+  
+  .btn-primary:hover {
+    background: linear-gradient(135deg, #5568d3 0%, #65408b 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  }
+  
+  .card {
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(10px);
+  }
+  
+  label {
+    color: #495057;
+    margin-bottom: 0.35rem;
+  }
+  
+  /* Адаптивность */
+  @media (max-width: 768px) {
+    .card-body {
+      padding: 2rem 1.5rem !important;
+    }
+  }
+</style>
 {% endblock %}

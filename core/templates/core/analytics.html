@@ -1,0 +1,98 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h3>📊 Аналитика и статистика</h3>
+  <small class="text-muted">Данные обновляются в реальном времени</small>
+</div>
+
+<div class="row">
+  <!-- График 1: Статус заявок -->
+  <div class="col-md-6 mb-4">
+    <div class="card shadow-sm h-100">
+      <div class="card-header bg-white">
+        <h5 class="mb-0">🆘 Статус заявок в IT</h5>
+      </div>
+      <div class="card-body">
+        <canvas id="ticketsChart"></canvas>
+        <div class="text-center mt-3">
+          <span class="badge bg-primary">Всего: {{ tickets_by_status.new|add:tickets_by_status.in_progress|add:tickets_by_status.resolved|add:tickets_by_status.closed }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- График 2: Причины отсутствия -->
+  <div class="col-md-6 mb-4">
+    <div class="card shadow-sm h-100">
+      <div class="card-header bg-white">
+        <h5 class="mb-0">📋 Текущие отсутствия</h5>
+      </div>
+      <div class="card-body">
+        <canvas id="absencesChart"></canvas>
+        <div class="text-center mt-3">
+          <span class="badge bg-warning text-dark">Сейчас нет: {{ absences_by_reason.sick|add:absences_by_reason.vacation|add:absences_by_reason.other }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Подключаем Chart.js (локально) -->
+<script src="{% static 'vendor/chartjs/chart.umd.min.js' %}"></script>
+
+<script>
+  //  График Заявок (Doughnut)
+  const ctxTickets = document.getElementById('ticketsChart').getContext('2d');
+  new Chart(ctxTickets, {
+    type: 'doughnut',
+    data: {
+      labels: [' Новая', '🔧 В работе', '✅ Решена', '📁 Закрыта'],
+      datasets: [{
+        data: [
+          {{ tickets_by_status.new }},
+          {{ tickets_by_status.in_progress }},
+          {{ tickets_by_status.resolved }},
+          {{ tickets_by_status.closed }}
+        ],
+        backgroundColor: ['#0d6efd', '#ffc107', '#198754', '#6c757d'],
+        borderWidth: 0
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'bottom' }
+      }
+    }
+  });
+
+  // 📋 График Отсутствий (Bar)
+  const ctxAbsences = document.getElementById('absencesChart').getContext('2d');
+  new Chart(ctxAbsences, {
+    type: 'bar',
+    data: {
+      labels: ['🤒 Болезнь', '🌴 Отпуск', '📝 Другое'],
+      datasets: [{
+        label: 'Сотрудников',
+        data: [
+          {{ absences_by_reason.sick }},
+          {{ absences_by_reason.vacation }},
+          {{ absences_by_reason.other }}
+        ],
+        backgroundColor: ['#dc3545', '#0dcaf0', '#6c757d'],
+        borderRadius: 5
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        y: { beginAtZero: true, ticks: { stepSize: 1 } }
+      },
+      plugins: {
+        legend: { display: false }
+      }
+    }
+  });
+</script>
+{% endblock %}

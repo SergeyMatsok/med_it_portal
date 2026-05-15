@@ -1,0 +1,54 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<h3>🏢 Подразделения МИТ</h3>
+<p class="text-muted mb-4">Информация о группах, руководителях и обслуживаемых МИС</p>
+
+<div class="row">
+  {% for dept in departments %}
+    <div class="col-md-6 col-lg-4 mb-4">
+      <div class="card h-100 shadow-sm">
+        <div class="card-header bg-light d-flex justify-content-between">
+          <h5 class="mb-0">{{ dept.name }}</h5>
+          <small class="text-muted">Сотрудников: {{ dept.count }}</small>
+        </div>
+        <div class="card-body">
+          {% if dept.mis %}
+            <p class="card-text small"><strong>️ МИС/Задачи:</strong> {{ dept.mis }}</p>
+          {% endif %}
+          
+          {% if dept.leaders %}
+            <h6 class="mt-3">👤 Руководители (Sid):</h6>
+            <ul class="list-unstyled mb-0">
+              {% for leader in dept.leaders %}
+                <li class="mb-1">
+                  <strong>{{ leader.last_name }} {{ leader.first_name }} {{ leader.patronymic|default:"" }}</strong><br>
+                  <small class="text-muted">📞 {{ leader.phone_internal|default:"—" }} | 🚪 {{ leader.office|default:"—" }}</small>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="text-muted small mt-2"><em>Руководитель не назначен</em></p>
+          {% endif %}
+
+          {% if is_manager %}
+            <hr>
+            <form method="post" class="d-flex gap-2">
+              {% csrf_token %}
+              <input type="hidden" name="dept_id" value="{{ dept.id }}">
+              <select name="emp_id" class="form-select form-select-sm" required>
+                <option value="">Выбрать сотрудника...</option>
+                {% for cand in dept.candidates %}
+                  <option value="{{ cand.id }}">{{ cand.last_name }} {{ cand.first_name }}</option>
+                {% endfor %}
+              </select>
+              <button type="submit" class="btn btn-sm btn-primary">Назначить</button>
+            </form>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  {% empty %}
+    <div class="col-12"><div class="alert alert-info">Подразделения не найдены. Добавьте их в <a href="/admin/">админке</a>.</div></div>
+  {% endfor %}
+</div>
+{% endblock %}

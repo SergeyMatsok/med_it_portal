@@ -1,66 +1,10 @@
-# from django.contrib import admin
-# from django.contrib.auth.admin import UserAdmin
-# from .models import (Employee, CalendarEvent, Announcement, 
-#                      AbsenceRecord, SupportTicket, InAppNotification, TicketReply)
-
-
-# @admin.register(Employee)
-# class EmployeeAdmin(UserAdmin):
-#     list_display = ('username', 'get_full_name', 'role', 'department', 'is_active')
-#     list_filter = ('role', 'department', 'is_active')
-#     search_fields = ('first_name', 'last_name', 'username')
-#     fieldsets = (
-#         (None, {'fields': ('username', 'password')}),
-#         ('Личные данные', {'fields': ('first_name', 'last_name', 'email', 'birth_date', 'office', 'phone_external', 'phone_internal', 'department')}),
-#         ('Роли и доступ', {'fields': ('role', 'is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
-#     )
-#     add_fieldsets = (
-#         (None, {'fields': ('username', 'password1', 'password2')}),
-#         ('Данные', {'fields': ('first_name', 'last_name', 'email', 'role', 'department')}),
-#     )
-
-# @admin.register(CalendarEvent)
-# class CalendarEventAdmin(admin.ModelAdmin):
-#     list_display = ('title', 'creator', 'start_dt', 'visibility')
-#     list_filter = ('visibility', 'creator__department')
-
-# @admin.register(Announcement)
-# class AnnouncementAdmin(admin.ModelAdmin):
-#     list_display = ('text_preview', 'scope', 'department', 'created_by', 'created_at')
-#     list_filter = ('scope', 'department')
-#     def text_preview(self, obj): return obj.text[:50] + ('...' if len(obj.text)>50 else '')
-
-# class TicketReplyInline(admin.TabularInline):
-#     model = TicketReply
-#     extra = 0
-#     readonly_fields = ('author', 'created_at', 'message')
-#     can_delete = False
-
-# @admin.register(SupportTicket)
-# class SupportTicketAdmin(admin.ModelAdmin):
-#     list_display = ('id', 'author', 'status', 'assigned_to', 'created_at')
-#     list_filter = ('status', 'author__department')
-#     search_fields = ('message', 'author__first_name', 'author__last_name')
-#     inlines = [TicketReplyInline]
-#     readonly_fields = ('created_at', 'updated_at')
-
-# @admin.register(TicketReply)
-# class TicketReplyAdmin(admin.ModelAdmin):
-#     list_display = ('ticket', 'author', 'created_at', 'message')
-#     list_filter = ('author__department',)
-#     search_fields = ('message',)
-
-# admin.site.register(AbsenceRecord)
-# admin.site.register(SupportTicket)
-# admin.site.register(InAppNotification)
-
-# core/admin.py
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from .models import (
     Employee, CalendarEvent, Announcement, 
-    AbsenceRecord, SupportTicket, TicketReply, InAppNotification
+    AbsenceRecord, SupportTicket, TicketReply, InAppNotification, Department
 )
+from .models import VmedaInfoSection, VmedaBrochure
 
 @admin.register(Employee)
 class EmployeeAdmin(UserAdmin):
@@ -69,8 +13,9 @@ class EmployeeAdmin(UserAdmin):
     search_fields = ('first_name', 'last_name', 'username')
     fieldsets = (
         (None, {'fields': ('username', 'password')}),
-        ('Личные данные', {'fields': ('first_name', 'last_name', 'email', 'birth_date', 'office', 'phone_external', 'phone_internal', 'department')}),
-        ('Роли и доступ', {'fields': ('role', 'is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
+        ('Персональные данные', {'fields': ('first_name', 'last_name', 'patronymic', 'email', 'birth_date')}),
+        ('Работа', {'fields': ('department', 'role', 'office', 'phone_external', 'phone_internal')}), 
+        ('Статус', {'fields': ('is_active',)}),
     )
     add_fieldsets = (
         (None, {'fields': ('username', 'password1', 'password2')}),
@@ -94,6 +39,16 @@ class AbsenceRecordAdmin(admin.ModelAdmin):
     list_display = ('employee', 'reason', 'start_dt', 'end_dt')
     list_filter = ('reason',)
 
+@admin.register(Department)
+class DepartmentAdmin(admin.ModelAdmin):
+    list_display = ('name', 'code', 'is_active', 'employee_count')
+    list_editable = ('is_active',)
+    search_fields = ('name', 'code')
+    ordering = ('name',)
+
+    def employee_count(self, obj):
+        return obj.employees.count()
+    employee_count.short_description = 'Сотрудников'
 # class TicketReplyInline(admin.TabularInline):
 #     model = TicketReply
 #     extra = 0
@@ -171,3 +126,24 @@ class TicketReplyAdmin(admin.ModelAdmin):
 class InAppNotificationAdmin(admin.ModelAdmin):
     list_display = ('recipient', 'notif_type', 'message', 'is_read', 'created_at')
     list_filter = ('is_read', 'notif_type', 'recipient__department')
+
+@admin.register(VmedaInfoSection)
+class VmedaInfoSectionAdmin(admin.ModelAdmin):
+    list_display = ('title', 'order', 'content_preview')
+    list_editable = ('order',)
+    search_fields = ('title',)
+    ordering = ('order',)
+
+    def content_preview(self, obj):
+        return obj.content[:50] + ('...' if len(obj.content) > 50 else '')
+    content_preview.short_description = 'Текст'
+
+@admin.register(VmedaBrochure)
+class VmedaBrochureAdmin(admin.ModelAdmin):
+    list_display = ('title', 'uploaded_at', 'file_link')
+
+    def file_link(self, obj):
+        if obj.file:
+            return f'<a href="{obj.file.url}" target="_blank">Скачать текущий</a>'
+        return '—'
+    file_link.allow_tags = True

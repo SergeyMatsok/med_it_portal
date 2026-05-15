@@ -1,16 +1,122 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>МИТ Портал</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/htmx.org@1.9.12"></script>
+    <link rel="icon" type="image/x-icon" href="{% static 'core/img/favicon.ico' %}">
+    <link href="{% static 'vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
+    <script src="{% static 'vendor/htmx/htmx.min.js' %}"></script>
     <style>
-      .search-results { position: absolute; background: #fff; width: 100%; z-index: 1000; border: 1px solid #ddd; border-top: none; border-radius: 0 0 .375rem .375rem; }
-      .search-results a { display: block; padding: 8px 12px; text-decoration: none; color: #333; }
+      /*  Поиск */
+      .search-results { 
+        position: absolute; 
+        background: #fff; 
+        width: 100%; 
+        z-index: 1050;
+        border: 1px solid #ddd; 
+        border-top: none; 
+        border-radius: 0 0 .375rem .375rem; 
+        max-height: 300px; 
+        overflow-y: auto; 
+      }
+      .search-results a { 
+        display: block; 
+        padding: 8px 12px; 
+        text-decoration: none; 
+        color: #333; 
+      }
       .search-results a:hover { background: #f8f9fa; }
-      .notif-badge { font-size: 0.65rem; position: absolute; top: -5px; right: -5px; }
+      
+      /*  Уведомления и профиль — исправленный z-index */
+      .dropdown-menu {
+        z-index: 1055 !important;
+      }
+      .navbar {
+        position: relative;
+        z-index: 1060;
+      }
+      #notifDropdown, .dropdown-toggle {
+        position: relative;
+        z-index: 1056;
+      }
+      
+      .notif-badge { 
+        font-size: 0.65rem; 
+        position: absolute; 
+        top: -5px; 
+        right: -5px; 
+        z-index: 1057;
+      }
+      .notif-dropdown { 
+        min-width: 320px; 
+        max-height: 400px; 
+        overflow-y: auto; 
+      }
+      .notif-item { 
+        border-bottom: 1px solid #eee; 
+        padding: 10px 12px; 
+      }
+      .notif-item.unread { 
+        background: #f8f9ff; 
+        border-left: 3px solid #0d6efd; 
+      }
+      .notif-item:last-child { border-bottom: none; }
+      .notif-time { font-size: 0.75rem; color: #6c757d; }
+      .notif-link { text-decoration: none; color: inherit; display: block; }
+      .notif-link:hover { background: #f8f9fa; }
+      .notif-empty { padding: 15px; text-align: center; color: #6c757d; }
+      
+      /* 🎨 Активное меню */
+      #sidebar-nav .list-group-item {
+        border-left: 4px solid transparent;
+        transition: all 0.2s ease;
+        padding-left: 1rem;
+      }
+      #sidebar-nav .list-group-item.active {
+        background-color: #e7f1ff;
+        color: #084298;
+        border-left-color: #0d6efd;
+        font-weight: 600;
+      }
+      #sidebar-nav .list-group-item:hover:not(.active) {
+        background-color: #f8f9fa;
+        border-left-color: #cbd3da;
+        padding-left: 1.1rem;
+      }
+      
+      /* 🖼️ Фоновое изображение */
+      body {
+        background-image: url("{% static 'core/img/voenno-medicinskaa-akademia-im-s-m-kirova-smapse-1.png' %}");
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+        min-height: 100vh;
+        position: relative;
+      }
+      body::before {
+        content: "";
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(255, 255, 255, 0.75);
+        z-index: -1;
+      }
+      .container { position: relative; z-index: 1; }
+      
+      @media (max-width: 768px) {
+        body { background-attachment: scroll; }
+      }
+      
+      /* 💫 Анимация бейджа */
+      .pulse-badge {
+        animation: badgePulse 1.2s ease-in-out infinite;
+      }
+      @keyframes badgePulse {
+        0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(220,53,69,0.7); }
+        50% { transform: scale(1.3); box-shadow: 0 0 0 6px rgba(220,53,69,0); }
+      }
     </style>
 </head>
 <body class="bg-light">
@@ -27,25 +133,37 @@
           </div>
           
           <!-- 🔔 Колокольчик -->
-          <a href="{% url 'notifications' %}" class="position-relative text-white" title="Уведомления">
-            🔔
-            {% with unread=user.inappnotification_set.filter.is_read.count %}
-              {% if unread %}
-                <span class="badge bg-danger rounded-pill notif-badge">{{ unread }}</span>
-              {% endif %}
-            {% endwith %}
-          </a>
-          
           <div class="dropdown">
-            <a class="text-white dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-              👤 {{ user.get_full_name|default:user.username }}
+            <a href="#" class="text-white position-relative" id="notifDropdown" data-bs-toggle="dropdown" aria-expanded="false" onclick="loadNotifications()">
+              🔔
+              <span class="badge bg-danger rounded-pill notif-badge" id="notifBadge" style="display: none;">0</span>
+            </a>
+            <div class="dropdown-menu dropdown-menu-end notif-dropdown p-0" aria-labelledby="notifDropdown">
+              <div class="d-flex justify-content-between align-items-center p-2 border-bottom">
+                <h6 class="mb-0">🔔 Уведомления</h6>
+                <button class="btn btn-sm btn-link text-decoration-none p-0" onclick="markAllRead(event)">Все прочитано</button>
+              </div>
+              <div id="notifList">
+                <div class="notif-empty">Загрузка...</div>
+              </div>
+              <div class="p-2 border-top text-center">
+                <a href="{% url 'notifications' %}" class="text-decoration-none small">Все уведомления →</a>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Профиль -->
+          <div class="dropdown">
+            <a class="text-white dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+               {{ user }}
             </a>
             <ul class="dropdown-menu dropdown-menu-end">
-              <li><a class="dropdown-item" href="{% url 'profile' %}">Настройки</a></li>
+              <li><a class="dropdown-item" href="{% url 'profile' %}">⚙️ Настройки</a></li>
               <li><hr class="dropdown-divider"></li>
               <li>
-                <form action="{% url 'logout' %}" method="post">{% csrf_token %}
-                  <button class="dropdown-item">Выйти</button>
+                <form action="{% url 'logout' %}" method="post" hx-boost="false">
+                  {% csrf_token %}
+                  <button type="submit" class="dropdown-item" data-bs-dismiss="dropdown">🚪 Выйти</button>
                 </form>
               </li>
             </ul>
@@ -59,16 +177,47 @@
     {% if user.is_authenticated %}
       <div class="row mb-4">
         <div class="col-md-3">
-          <div class="list-group">
-            <a href="{% url 'directory' %}" class="list-group-item list-group-item-action">👥 Сотрудники</a>
-            <a href="{% url 'announcements' %}" class="list-group-item list-group-item-action">📢 Оповещения</a>
-            <a href="{% url 'calendar' %}" class="list-group-item list-group-item-action">📅 Календарь</a>
-            <a href="{% url 'absences' %}" class="list-group-item list-group-item-action">📋 Отсутствующие</a>
-            {% if user.role in 'adm,sup,sid' %}     
-              <a href="{% url 'announcement_create' %}" class="list-group-item list-group-item-action">📤 Создать оповещение</a>
+          <div class="list-group" id="sidebar-nav">
+            <!--  Главная -->
+            <a href="{% url 'dashboard' %}" class="list-group-item list-group-item-action {% if request.path == '/dashboard/' %}active{% endif %}">🏠 Главная</a>
+            
+            <!-- 📅 Календарь -->
+            <a href="{% url 'calendar' %}" class="list-group-item list-group-item-action {% if '/calendar/' in request.path %}active{% endif %}">📅 Календарь</a>
+
+            <!-- 👥 Сотрудники -->
+            <a href="{% url 'directory' %}" class="list-group-item list-group-item-action {% if '/directory/' in request.path %}active{% endif %}">👥 Сотрудники</a>
+
+            <!--  Отсутствующие -->
+            <a href="{% url 'absences' %}" class="list-group-item list-group-item-action {% if request.path == '/absences/' %}active{% endif %}">📋 Отсутствующие</a>
+                       
+            <!--  Оповещения (ИСПРАВЛЕНО: точное совпадение пути) -->
+            <a href="{% url 'announcements' %}" class="list-group-item list-group-item-action {% if request.path == '/announcements/' %}active{% endif %}">📢 Оповещения</a>
+            
+            <!-- 📤 Создать оповещение -->
+            {% if user.role in 'adm,sup,sid' %}
+              <a href="{% url 'announcement_create' %}" class="list-group-item list-group-item-action {% if request.path == '/announcements/create/' %}active{% endif %}">📤 Создать оповещение</a>
             {% endif %}
-            <a href="{% url 'absence_report' %}" class="list-group-item list-group-item-action">📝 Уведомить об отсутствии</a>
-            <a href="{% url 'ticket_list' %}" class="list-group-item list-group-item-action">🆘 Заявки в IT</a>
+
+            <!-- 📝 Уведомить об отсутствии -->
+            <a href="{% url 'absence_report' %}" class="list-group-item list-group-item-action {% if request.path == '/absence/report/' %}active{% endif %}">📝 Уведомить об отсутствии</a>
+            
+            <!-- Аналитика -->
+            <a href="{% url 'analytics' %}" class="list-group-item list-group-item-action {% if '/analytics/' in request.path %}active{% endif %}">📊 Аналитика</a>
+            
+            <!--  Подразделения -->
+            <a href="{% url 'departments' %}" class="list-group-item list-group-item-action {% if '/departments/' in request.path %}active{% endif %}">🏢 Подразделения</a>
+
+            <!-- Справка ВМедА -->
+            <a href="{% url 'vmeda_info' %}" class="list-group-item list-group-item-action {% if '/vmeda/' in request.path %}active{% endif %}">🏥 Справка ВМедА</a>
+
+            <!-- 🆘 Заявки в IT -->
+            <a href="{% url 'ticket_list' %}" class="list-group-item list-group-item-action {% if '/it/' in request.path %}active{% endif %}">🆘 Заявки в IT</a>
+
+            <!-- ⚙️ Управление (только Sup/Adm) -->
+            {% if user.role in 'sup,adm' %}
+              <a href="{% url 'employee_management' %}" class="list-group-item list-group-item-action {% if '/sup/management/' in request.path %}active{% endif %}">⚙️ Управление</a>
+            {% endif %}
+          
           </div>
         </div>
         <div class="col-md-9">
@@ -80,45 +229,24 @@
     {% endif %}
   </div>
 
-  <script>
-    // Показ/скрытие результатов поиска
-    document.getElementById('searchInput')?.addEventListener('htmx:afterRequest', function(evt) {
-      const res = document.getElementById('searchResults');
-      res.classList.toggle('d-none', !evt.detail.xhr.responseText.trim());
-    });
-    // Форматируем ответ поиска в HTML
-    document.getElementById('searchInput')?.addEventListener('htmx:afterOnLoad', function(evt) {
-      const data = JSON.parse(evt.detail.xhr.responseText);
-      const res = document.getElementById('searchResults');
-      res.innerHTML = data.map(u => 
-        `<a href="/directory/?q=${u.last_name}+${u.first_name}">${u.last_name} ${u.first_name} <small class="text-muted">(${u.department})</small></a>`
-      ).join('');
-    });
-  </script>
-  <script>
-  // 🔐 Автоматическая подстановка CSRF-токена для HTMX
-  document.body.addEventListener('htmx:configRequest', (event) => {
-    event.detail.headers['X-CSRFToken'] = '{{ csrf_token }}';
-  });
+  <!-- Bootstrap JS -->
+  <script src="{% static 'vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
 
-  // 🔍 Поиск сотрудников (ваш существующий код)
-  const searchInput = document.getElementById('searchInput');
-  if (searchInput) {
-    searchInput.addEventListener('htmx:afterRequest', function(evt) {
-      const res = document.getElementById('searchResults');
-      res.classList.toggle('d-none', !evt.detail.xhr.responseText.trim());
-    });
-    searchInput.addEventListener('htmx:afterOnLoad', function(evt) {
-      try {
-        const data = JSON.parse(evt.detail.xhr.responseText);
-        const res = document.getElementById('searchResults');
-        res.innerHTML = data.map(u => 
-          `<a href="/directory/?q=${encodeURIComponent(u.last_name + ' ' + u.first_name)}">${u.last_name} ${u.first_name} <small class="text-muted">(${u.department})</small></a>`
-        ).join('');
-      } catch(e) {}
-    });
-  }
+  <!-- 🔧 Конфигурация URL для JS -->
+<script>
+  window.DJANGO_CONFIG = {
+    urls: {
+      apiNotifications: "{% url 'api_notifications' %}",        // /api/notifications/
+      apiNotifCount: "{% url 'api_notif_count' %}",             // /api/notifications/count/
+      apiNotifReadAll: "{% url 'api_notif_read_all' %}",        // /api/notifications/read-all/
+      // 👇 ИСПРАВЛЕНО: теперь ведёт на правильный эндпоинт чтения одного уведомления
+      apiNotifRead: "{% url 'api_notif_read' pk=0 %}".replace('/0/', '/'), 
+      apiSearch: "{% url 'api_search' %}"
+    }
+  };
 </script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Наш внешний скрипт -->
+  <script src="{% static 'core/js/main.js' %}"></script>
 </body>
 </html>

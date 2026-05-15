@@ -142,9 +142,10 @@ load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 # SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-change-me-in-prod')
-SECRET_KEY = 'django-insecure-!8q@8@l)w5#d#^@k%l0srjj11mz)e*)n_g+&n5l^!=#_dbb$5y'
-DEBUG = True
-ALLOWED_HOSTS = ['*']
+
+SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-key')
+DEBUG = os.environ.get('DEBUG', '0') == '1'
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -158,6 +159,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware', 
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -183,7 +185,7 @@ WSGI_APPLICATION = 'med_it_portal.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': BASE_DIR / 'data' / 'db.sqlite3',
     }
 }
 
@@ -193,11 +195,16 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 LANGUAGE_CODE = 'ru'
-TIME_ZONE = 'Europe/Moscow'
+TIME_ZONE = os.environ.get('TZ', 'Europe/Moscow')
 USE_I18N = True
 USE_TZ = True
 
-STATIC_URL = 'static/'
+# STATIC_URL = 'static/'
+# STATICFILES_DIRS = [BASE_DIR / 'core' / 'static']
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_DIRS = [BASE_DIR / 'core' / 'static']
+# STATICFILES_DIRS = [BASE_DIR / 'static']  # если статика в корне проекта
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # 👉 Кастомная модель пользователя (ОБЯЗАТЕЛЬНО ДО ПЕРВОЙ МИГРАЦИИ)
@@ -212,3 +219,9 @@ CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', 'redis://localhost:6379/0')
 CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', 'redis://localhost:6379/1')
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
+
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'

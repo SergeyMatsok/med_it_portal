@@ -1,19 +1,48 @@
 {% extends 'core/base.html' %}
 {% block content %}
-<h3>📢 Создать оповещение</h3>
+<style>
+  /* 🔧 Принудительно выравниваем длину всех полей */
+  .uniform-form input,
+  .uniform-form select,
+  .uniform-form textarea {
+    width: 100% !important;
+    box-sizing: border-box;
+  }
+</style>
 
-<form method="post" class="mt-4">
-  {% csrf_token %}
-  {% for field in form %}
-    <div class="mb-3">
-      <label class="form-label">{{ field.label }}</label>
-      {{ field }}
-      {% if field.errors %}
-        <div class="text-danger small">{{ field.errors.0 }}</div>
-      {% endif %}
+<div class="container">
+  <div class="row">
+    <div class="col-md-7 col-lg-6">
+      
+      <div class="card shadow-sm border-0 rounded-3 uniform-form">
+        <div class="card-body p-4">
+          <h3 class="mb-4">📢 Создать оповещение</h3>
+          
+          <form method="post">
+            {% csrf_token %}
+            {% for field in form %}
+              <div class="row mb-3 align-items-center">
+                <label for="{{ field.id_for_label }}" class="col-sm-5 col-form-label fw-semibold">
+                  {{ field.label }}
+                </label>
+                <div class="col-sm-7">
+                  {{ field }}
+                  {% if field.errors %}
+                    <div class="text-danger small mt-1">{{ field.errors.0 }}</div>
+                  {% endif %}
+                </div>
+              </div>
+            {% endfor %}
+            
+            <div class="d-grid gap-2 mt-4">
+              <button type="submit" class="btn btn-primary fw-bold py-2">📤 Опубликовать</button>
+              <a href="{% url 'announcements' %}" class="btn btn-secondary py-2">❌ Отмена</a>
+            </div>
+          </form>
+        </div>
+      </div>
+      
     </div>
-  {% endfor %}
-  <button type="submit" class="btn btn-primary">Отправить</button>
-  <a href="{% url 'announcements' %}" class="btn btn-secondary">Отмена</a>
-</form>
+  </div>
+</div>
 {% endblock %}

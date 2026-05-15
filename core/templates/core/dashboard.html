@@ -1,10 +1,10 @@
 {% extends 'core/base.html' %}
 {% block content %}
-  <h2>👋 Добро пожаловать, {{ user.get_full_name|default:user.username }}</h2>
+  <h2>👋 Добро пожаловать, {{ user }}</h2>
   <p class="text-muted">Ваша роль: {{ user.get_role_display }}</p>
   
   <div class="card mb-3">
-    <div class="card-header">🔔 Ближайшие события</div>
+    <div class="card-header"> Ближайшие события</div>
     <ul class="list-group list-group-flush">
       {% for ev in upcoming_events %}
         <li class="list-group-item d-flex justify-content-between align-items-center">

@@ -7,21 +7,32 @@ class Role(models.TextChoices):
     SID = 'sid', 'Руководитель подразделения'
     USR = 'usr', 'Сотрудник'
 
-class Department(models.TextChoices):
-    EMIAS = 'emias', 'ЕМИАС'
-    PARUS = 'parus', 'ПАРУС'
-    PACS = 'pacs', 'ПАКС'
-    LIS = 'lis', 'ЛИС'
-    IT_DEPT = 'it_dev', 'Отдел разработки'
-    OTHER = 'other', 'Прочее'
+class Department(models.Model):
+    name = models.CharField(max_length=100, verbose_name="Название")
+    code = models.CharField(max_length=20, unique=True, blank=True, verbose_name="Код (emias, parus, it_dev...)")
+    mis_info = models.TextField(blank=True, verbose_name="Информация о МИС / Задачи")
+    is_active = models.BooleanField(default=True, verbose_name="Активно")
+
+    class Meta:
+        verbose_name = 'Подразделение'
+        verbose_name_plural = 'Подразделения'
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
+
+
 
 class Employee(AbstractUser):
     class Meta:
         verbose_name = 'Сотрудник'
         verbose_name_plural = 'Сотрудники'
 
+    patronymic = models.CharField(max_length=100, blank=True, verbose_name='Отчество')
+    
     role = models.CharField(max_length=3, choices=Role.choices, default=Role.USR, verbose_name='Роль')
-    department = models.CharField(max_length=10, choices=Department.choices, blank=True, default=Department.OTHER, verbose_name='Подразделение')
+    department = models.ForeignKey(Department, null=True, blank=True, on_delete=models.SET_NULL, 
+                                   verbose_name='Подразделение', related_name='employees')
     office = models.CharField(max_length=50, blank=True, verbose_name='Кабинет')
     phone_external = models.CharField(max_length=20, blank=True, verbose_name='Внешний телефон')
     phone_internal = models.CharField(max_length=20, blank=True, verbose_name='Внутренний телефон')
@@ -29,7 +40,17 @@ class Employee(AbstractUser):
     is_active = models.BooleanField(default=True, verbose_name='Активен')
 
     def __str__(self):
-        return self.get_full_name() or self.username
+        # 👇 Отображение: "Иванов Иван Владимирович" или "Иванов Иван" если отчества нет
+        parts = [self.last_name, self.first_name]
+        if self.patronymic:
+            parts.append(self.patronymic)
+        return ' '.join(parts) or self.username
+
+    def get_full_name_with_patronymic(self):
+        """Полное ФИО с отчеством (для шаблонов)"""
+        if self.patronymic:
+            return f"{self.last_name} {self.first_name} {self.patronymic}"
+        return self.get_full_name()
 
     @property
     def is_admin(self): return self.role == Role.ADM
@@ -68,7 +89,7 @@ class Announcement(models.Model):
 
     text = models.TextField(verbose_name='Текст оповещения')
     scope = models.CharField(max_length=10, choices=SCOPE, default='all', verbose_name='Область рассылки')
-    department = models.CharField(max_length=10, choices=Department.choices, blank=True, verbose_name='Подразделение')
+    department = models.ForeignKey(Department, null=True, blank=True, on_delete=models.SET_NULL, verbose_name='Подразделение')
     created_by = models.ForeignKey(Employee, on_delete=models.SET_NULL, null=True, verbose_name='Автор')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
 
@@ -162,3 +183,31 @@ class TicketReply(models.Model):
 
     def __str__(self):
         return f"Ответ от {self.author} к заявке #{self.ticket.id}"
+    
+
+class VmedaInfoSection(models.Model):
+    """Блок информации на странице ВМедА"""
+    title = models.CharField(max_length=100, verbose_name="Заголовок раздела")
+    content = models.TextField(verbose_name="Текст раздела (поддерживает переносы строк)")
+    order = models.PositiveIntegerField(default=0, verbose_name="Порядок отображения")
+    
+    class Meta:
+        verbose_name = 'Раздел справки ВМедА'
+        verbose_name_plural = 'Разделы справки ВМедА'
+        ordering = ['order']
+
+    def __str__(self):
+        return self.title
+
+class VmedaBrochure(models.Model):
+    """Модель для хранения файла-памятки"""
+    title = models.CharField(max_length=100, default="Памятка сотрудника", verbose_name="Название")
+    file = models.FileField(upload_to='brochures/', verbose_name="PDF файл")
+    uploaded_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата загрузки")
+
+    class Meta:
+        verbose_name = 'Файл-памятка'
+        verbose_name_plural = 'Файлы-памятки'
+
+    def __str__(self):
+        return f"Памятка: {self.title}"

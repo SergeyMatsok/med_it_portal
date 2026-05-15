@@ -69,7 +69,6 @@
 const shareSelections = {};
 
 function openShareModal(eventId) {
-  // Сброс состояния при открытии
   document.getElementById('shareSearch' + eventId).value = '';
   document.getElementById('shareResults' + eventId).innerHTML = '';
   document.getElementById('shareSelected' + eventId).innerHTML = 'Сотрудник не выбран';
@@ -78,7 +77,6 @@ function openShareModal(eventId) {
   document.getElementById('shareMsg' + eventId).innerHTML = '';
   delete shareSelections[eventId];
   
-  // Показ модалки
   const modal = new bootstrap.Modal(document.getElementById('shareModal' + eventId));
   modal.show();
 }
@@ -114,10 +112,12 @@ function setupShareSearch(eventId) {
             const el = document.createElement('button');
             el.type = 'button';
             el.className = 'list-group-item list-group-item-action py-1';
-            el.innerHTML = `${emp.last_name} ${emp.first_name} <small class="text-muted">(${emp.department})</small>`;
+            // 👇 Добавлено отчество в отображение
+            const fullName = `${emp.last_name} ${emp.first_name} ${emp.patronymic || ''}`.trim();
+            el.innerHTML = `${fullName} <small class="text-muted">(${emp.department})</small>`;
             el.onclick = () => {
-              shareSelections[eventId] = { id: emp.id, name: `${emp.last_name} ${emp.first_name}` };
-              selected.innerHTML = `✅ <strong>${emp.last_name} ${emp.first_name}</strong>`;
+              shareSelections[eventId] = { id: emp.id, name: fullName };
+              selected.innerHTML = `✅ <strong>${fullName}</strong>`;
               selected.className = 'text-center text-success small mb-2';
               btn.disabled = false;
               results.innerHTML = '';
@@ -180,15 +180,12 @@ function getCsrfToken() {
   return cookie ? cookie.split('=')[1] : '';
 }
 
-// Инициализация после загрузки DOM
 document.addEventListener('DOMContentLoaded', function() {
-  // Инициализируем поиск только для тех событий, где есть кнопка "Поделиться"
-  // (т.е. где current user является creator'ом)
   {% for event in events %}
     {% if event.creator == user %}
     (function() {
       const input = document.getElementById('shareSearch{{ event.id }}');
-      if (input) {  // 👈 Проверка: элемент существует?
+      if (input) {
         setupShareSearch({{ event.id }});
       }
     })();
