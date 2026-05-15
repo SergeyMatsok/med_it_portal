@@ -8,85 +8,29 @@
     <link rel="icon" type="image/x-icon" href="{% static 'core/img/favicon.ico' %}">
     <link href="{% static 'vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
     <script src="{% static 'vendor/htmx/htmx.min.js' %}"></script>
+    
+    <!-- 🎨 Единая дизайн-система (CSS-переменные) -->
     <style>
-      /*  Поиск */
-      .search-results { 
-        position: absolute; 
-        background: #fff; 
-        width: 100%; 
-        z-index: 1050;
-        border: 1px solid #ddd; 
-        border-top: none; 
-        border-radius: 0 0 .375rem .375rem; 
-        max-height: 300px; 
-        overflow-y: auto; 
+      :root {
+        --primary: #2563eb;
+        --primary-hover: #1d4ed8;
+        --secondary: #64748b;
+        --success: #22c55e;
+        --warning: #f59e0b;
+        --danger: #ef4444;
+        --bg: #f8fafc;
+        --card-bg: #ffffff;
+        --text: #0f172a;
+        --text-muted: #64748b;
+        --border: #e2e8f0;
+        --radius: 0.75rem;
+        --radius-sm: 0.5rem;
+        --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+        --shadow-lg: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+        --transition: all 0.2s ease-in-out;
       }
-      .search-results a { 
-        display: block; 
-        padding: 8px 12px; 
-        text-decoration: none; 
-        color: #333; 
-      }
-      .search-results a:hover { background: #f8f9fa; }
-      
-      /*  Уведомления и профиль — исправленный z-index */
-      .dropdown-menu {
-        z-index: 1055 !important;
-      }
-      .navbar {
-        position: relative;
-        z-index: 1060;
-      }
-      #notifDropdown, .dropdown-toggle {
-        position: relative;
-        z-index: 1056;
-      }
-      
-      .notif-badge { 
-        font-size: 0.65rem; 
-        position: absolute; 
-        top: -5px; 
-        right: -5px; 
-        z-index: 1057;
-      }
-      .notif-dropdown { 
-        min-width: 320px; 
-        max-height: 400px; 
-        overflow-y: auto; 
-      }
-      .notif-item { 
-        border-bottom: 1px solid #eee; 
-        padding: 10px 12px; 
-      }
-      .notif-item.unread { 
-        background: #f8f9ff; 
-        border-left: 3px solid #0d6efd; 
-      }
-      .notif-item:last-child { border-bottom: none; }
-      .notif-time { font-size: 0.75rem; color: #6c757d; }
-      .notif-link { text-decoration: none; color: inherit; display: block; }
-      .notif-link:hover { background: #f8f9fa; }
-      .notif-empty { padding: 15px; text-align: center; color: #6c757d; }
-      
-      /* 🎨 Активное меню */
-      #sidebar-nav .list-group-item {
-        border-left: 4px solid transparent;
-        transition: all 0.2s ease;
-        padding-left: 1rem;
-      }
-      #sidebar-nav .list-group-item.active {
-        background-color: #e7f1ff;
-        color: #084298;
-        border-left-color: #0d6efd;
-        font-weight: 600;
-      }
-      #sidebar-nav .list-group-item:hover:not(.active) {
-        background-color: #f8f9fa;
-        border-left-color: #cbd3da;
-        padding-left: 1.1rem;
-      }
-      
-      /* 🖼️ Фоновое изображение */
+
+      /*  Базовые стили */
       body {
         background-image: url("{% static 'core/img/voenno-medicinskaa-akademia-im-s-m-kirova-smapse-1.png' %}");
         background-size: cover;
@@ -95,67 +39,328 @@
         background-attachment: fixed;
         min-height: 100vh;
         position: relative;
+        color: var(--text);
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
       }
       body::before {
         content: "";
         position: fixed;
         top: 0; left: 0; right: 0; bottom: 0;
-        background: rgba(255, 255, 255, 0.75);
+        background: rgba(255, 255, 255, 0.85);
         z-index: -1;
       }
       .container { position: relative; z-index: 1; }
-      
+      @media (max-width: 768px) { body { background-attachment: scroll; } }
+
+      /* 🃏 Карточки */
+      .card {
+        border: none;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        background: var(--card-bg);
+        transition: var(--transition);
+        margin-bottom: 1rem;
+      }
+      .card:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
+      .card-header {
+        background: transparent;
+        border-bottom: 1px solid var(--border);
+        font-weight: 600;
+        color: var(--text);
+        padding: 1rem 1.5rem;
+      }
+      .card-body { padding: 1.5rem; }
+      .card-title { font-weight: 600; margin-bottom: 1rem; }
+
+      /* 🔘 Кнопки */
+      .btn {
+        border-radius: var(--radius-sm);
+        font-weight: 500;
+        padding: 0.5rem 1rem;
+        transition: var(--transition);
+        border: none;
+      }
+      .btn-primary { 
+        background: var(--primary); 
+        color: white;
+      }
+      .btn-primary:hover { 
+        background: var(--primary-hover); 
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(37,99,235,0.3);
+      }
+      .btn-secondary { 
+        background: #f1f5f9; 
+        color: var(--text);
+        border: 1px solid var(--border);
+      }
+      .btn-secondary:hover { 
+        background: #e2e8f0;
+        transform: translateY(-1px);
+      }
+      .btn-outline-secondary {
+        color: var(--text-muted);
+        border: 1px solid var(--border);
+      }
+      .btn-outline-secondary:hover {
+        background: #f1f5f9;
+        color: var(--text);
+      }
+      .btn-sm { padding: 0.25rem 0.5rem; font-size: 0.875rem; }
+      .btn-group .btn { margin-right: 0.25rem; }
+      .btn-group .btn:last-child { margin-right: 0; }
+
+      /* 📝 Формы */
+      .form-control, .form-select {
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        padding: 0.5rem 0.75rem;
+        transition: var(--transition);
+        background: #fff;
+      }
+      .form-control:focus, .form-select:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 0.2rem rgba(37,99,235,0.15);
+        outline: none;
+      }
+      .form-label {
+        font-weight: 500;
+        color: var(--text);
+        margin-bottom: 0.35rem;
+      }
+      .form-text { color: var(--text-muted); font-size: 0.875rem; }
+
+      /*  Таблицы */
+      .table {
+        background: var(--card-bg);
+        border-radius: var(--radius);
+        overflow: hidden;
+        margin-bottom: 0;
+      }
+      .table thead th {
+        background: #f8fafc;
+        color: var(--text-muted);
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-weight: 600;
+        border-bottom: 2px solid var(--border);
+        padding: 0.75rem 1rem;
+      }
+      .table tbody td {
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid var(--border);
+        vertical-align: middle;
+      }
+      .table tbody tr:hover { background: #f8fafc; }
+      .table tbody tr:last-child td { border-bottom: none; }
+
+      /* 📌 Боковое меню — ИСПРАВЛЕНО: шире и удобнее */
+      #sidebar-nav {
+        width: 100%;
+      }
+      #sidebar-nav .list-group-item {
+        border: none;
+        border-left: 3px solid transparent;
+        border-radius: var(--radius-sm);
+        margin-bottom: 0.25rem;
+        padding: 0.75rem 1.25rem !important; /* Увеличенные отступы */
+        transition: var(--transition);
+        color: var(--text);
+        font-weight: 500;
+        font-size: 0.95rem; /* Чуть крупнее текст */
+        white-space: nowrap; /* Текст в одну строку */
+        overflow: hidden;
+        text-overflow: ellipsis; /* Многоточие если не влезает */
+      }
+      #sidebar-nav .list-group-item:hover:not(.active) {
+        background: #f1f5f9;
+        border-left-color: var(--primary);
+        padding-left: 1.5rem !important; /* Плавное смещение при наведении */
+        color: var(--primary);
+      }
+      #sidebar-nav .list-group-item.active {
+        background: #eff6ff;
+        color: var(--primary);
+        border-left-color: var(--primary);
+        font-weight: 600;
+      }
+      #sidebar-nav .list-group-item i,
+      #sidebar-nav .list-group-item span:first-child {
+        margin-right: 0.75rem;
+        width: 1.5rem;
+        display: inline-block;
+        text-align: center;
+        font-size: 1.1rem;
+      }
+
+      /* 🔍 Поиск */
+      .search-results { 
+        position: absolute; 
+        background: #fff; 
+        width: 100%; 
+        z-index: 1050;
+        border: 1px solid var(--border); 
+        border-top: none; 
+        border-radius: 0 0 var(--radius-sm) var(--radius-sm); 
+        max-height: 300px; 
+        overflow-y: auto;
+        box-shadow: var(--shadow-lg);
+      }
+      .search-results a { 
+        display: block; 
+        padding: 0.6rem 1rem; 
+        text-decoration: none; 
+        color: var(--text);
+        transition: var(--transition);
+      }
+      .search-results a:hover { background: #f1f5f9; }
+
+      /* 🔔 Уведомления */
+      .dropdown-menu {
+        z-index: 1055 !important;
+        border: none;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow-lg);
+        padding: 0;
+      }
+      .navbar {
+        position: relative;
+        z-index: 1060;
+        border-radius: 0 0 var(--radius) var(--radius);
+      }
+      #notifDropdown, .dropdown-toggle {
+        position: relative;
+        z-index: 1056;
+      }
+      .notif-badge { 
+        font-size: 0.65rem; 
+        position: absolute; 
+        top: -5px; 
+        right: -5px; 
+        z-index: 1057;
+        animation: pulse 2s infinite;
+      }
+      @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+      }
+      .notif-dropdown { 
+        min-width: 320px; 
+        max-height: 400px; 
+        overflow-y: auto; 
+      }
+      .notif-item { 
+        border-bottom: 1px solid var(--border); 
+        padding: 0.75rem 1rem; 
+        transition: var(--transition);
+      }
+      .notif-item.unread { 
+        background: #eff6ff; 
+        border-left: 3px solid var(--primary); 
+      }
+      .notif-item:hover { background: #f8fafc; }
+      .notif-item:last-child { border-bottom: none; }
+      .notif-time { font-size: 0.75rem; color: var(--text-muted); }
+      .notif-link { text-decoration: none; color: inherit; display: block; }
+      .notif-empty { padding: 1.5rem; text-align: center; color: var(--text-muted); }
+
+      /* 🏷️ Бейджи и статусы */
+      .badge {
+        font-weight: 500;
+        padding: 0.35em 0.65em;
+        border-radius: 0.375rem;
+        font-size: 0.75rem;
+      }
+      .badge.bg-success { background: rgba(34,197,94,0.15) !important; color: #16a34a !important; }
+      .badge.bg-warning { background: rgba(245,158,11,0.15) !important; color: #d97706 !important; }
+      .badge.bg-danger { background: rgba(239,68,68,0.15) !important; color: #dc2626 !important; }
+      .badge.bg-info { background: rgba(59,130,246,0.15) !important; color: #2563eb !important; }
+
+      /* ⚡ Алерты */
+      .alert {
+        border: none;
+        border-radius: var(--radius-sm);
+        font-weight: 500;
+        padding: 0.75rem 1rem;
+        margin-bottom: 1rem;
+      }
+      .alert-success { background: rgba(34,197,94,0.1); color: #16a34a; }
+      .alert-warning { background: rgba(245,158,11,0.1); color: #d97706; }
+      .alert-danger { background: rgba(239,68,68,0.1); color: #dc2626; }
+      .alert-info { background: rgba(59,130,246,0.1); color: #2563eb; }
+
+      /* 🔄 Утилиты */
+      .text-muted { color: var(--text-muted) !important; }
+      .fw-semibold { font-weight: 600 !important; }
+      .rounded-3 { border-radius: var(--radius) !important; }
+      .shadow-sm { box-shadow: var(--shadow) !important; }
+      .border-0 { border: none !important; }
+
+      /* 📱 Адаптив */
       @media (max-width: 768px) {
-        body { background-attachment: scroll; }
-      }
-      
-      /* 💫 Анимация бейджа */
-      .pulse-badge {
-        animation: badgePulse 1.2s ease-in-out infinite;
-      }
-      @keyframes badgePulse {
-        0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(220,53,69,0.7); }
-        50% { transform: scale(1.3); box-shadow: 0 0 0 6px rgba(220,53,69,0); }
+        .card-body { padding: 1rem; }
+        #sidebar-nav .list-group-item { 
+          padding: 0.6rem 1rem !important; 
+          font-size: 0.9rem; 
+          white-space: normal; /* Разрешить перенос на мобильных */
+        }
+        .notif-dropdown { min-width: 280px; }
       }
     </style>
 </head>
-<body class="bg-light">
+<body>
+  <!-- 🧭 Навигация -->
   <nav class="navbar navbar-dark bg-primary mb-4">
     <div class="container">
-      <a class="navbar-brand" href="{% url 'dashboard' %}">🏥 Отдел МИТ</a>
+      <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="{% url 'dashboard' %}">
+        <img src="{% static 'core/img/emblem.png' %}" height="30">
+        <span>Отдел МИТ</span>
+      </a>
       {% if user.is_authenticated %}
         <div class="d-flex align-items-center gap-3">
           <!-- 🔍 Поиск -->
           <div class="position-relative">
-            <input type="text" id="searchInput" class="form-control form-control-sm" placeholder="🔍 ФИО или отдел..." 
-                   hx-get="{% url 'api_search' %}" hx-trigger="input changed delay:300ms, search" hx-target="#searchResults" hx-params="q">
+            <input type="text" id="searchInput" class="form-control form-control-sm" 
+                   placeholder="🔍 ФИО или отдел..." 
+                   hx-get="{% url 'api_search' %}" 
+                   hx-trigger="input changed delay:300ms, search" 
+                   hx-target="#searchResults" 
+                   hx-params="q">
             <div id="searchResults" class="search-results d-none"></div>
           </div>
           
-          <!-- 🔔 Колокольчик -->
+          <!-- 🔔 Уведомления -->
           <div class="dropdown">
-            <a href="#" class="text-white position-relative" id="notifDropdown" data-bs-toggle="dropdown" aria-expanded="false" onclick="loadNotifications()">
+            <a href="#" class="text-white position-relative" id="notifDropdown" 
+               data-bs-toggle="dropdown" aria-expanded="false" onclick="loadNotifications()">
               🔔
-              <span class="badge bg-danger rounded-pill notif-badge" id="notifBadge" style="display: none;">0</span>
+              <span class="badge bg-danger rounded-pill notif-badge" 
+                    id="notifBadge" style="display: none;">0</span>
             </a>
-            <div class="dropdown-menu dropdown-menu-end notif-dropdown p-0" aria-labelledby="notifDropdown">
-              <div class="d-flex justify-content-between align-items-center p-2 border-bottom">
-                <h6 class="mb-0">🔔 Уведомления</h6>
-                <button class="btn btn-sm btn-link text-decoration-none p-0" onclick="markAllRead(event)">Все прочитано</button>
+            <div class="dropdown-menu dropdown-menu-end notif-dropdown p-0" 
+                 aria-labelledby="notifDropdown">
+              <div class="d-flex justify-content-between align-items-center p-3 border-bottom">
+                <h6 class="mb-0 fw-semibold">🔔 Уведомления</h6>
+                <button class="btn btn-sm btn-link text-decoration-none p-0" 
+                        onclick="markAllRead(event)">Все прочитано</button>
               </div>
               <div id="notifList">
                 <div class="notif-empty">Загрузка...</div>
               </div>
-              <div class="p-2 border-top text-center">
-                <a href="{% url 'notifications' %}" class="text-decoration-none small">Все уведомления →</a>
+              <div class="p-3 border-top text-center bg-light">
+                <a href="{% url 'notifications' %}" class="text-decoration-none small fw-semibold">
+                  Все уведомления →
+                </a>
               </div>
             </div>
           </div>
           
-          <!-- Профиль -->
+          <!-- 👤 Профиль -->
           <div class="dropdown">
-            <a class="text-white dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-               {{ user }}
+            <a class="text-white dropdown-toggle fw-semibold" href="#" role="button" 
+               data-bs-toggle="dropdown" aria-expanded="false">
+              👤 {{ user }}
             </a>
             <ul class="dropdown-menu dropdown-menu-end">
               <li><a class="dropdown-item" href="{% url 'profile' %}">⚙️ Настройки</a></li>
@@ -163,7 +368,7 @@
               <li>
                 <form action="{% url 'logout' %}" method="post" hx-boost="false">
                   {% csrf_token %}
-                  <button type="submit" class="dropdown-item" data-bs-dismiss="dropdown">🚪 Выйти</button>
+                  <button type="submit" class="dropdown-item text-danger">🚪 Выйти</button>
                 </form>
               </li>
             </ul>
@@ -173,54 +378,58 @@
     </div>
   </nav>
 
+  <!-- 📦 Основной контент -->
   <div class="container">
     {% if user.is_authenticated %}
-      <div class="row mb-4">
-        <div class="col-md-3">
+      <div class="row g-4">
+        <!-- 🧭 Боковое меню — ИСПРАВЛЕНО: ширина увеличена -->
+        <div class="col-md-3 col-lg-3">
           <div class="list-group" id="sidebar-nav">
-            <!--  Главная -->
-            <a href="{% url 'dashboard' %}" class="list-group-item list-group-item-action {% if request.path == '/dashboard/' %}active{% endif %}">🏠 Главная</a>
-            
-            <!-- 📅 Календарь -->
-            <a href="{% url 'calendar' %}" class="list-group-item list-group-item-action {% if '/calendar/' in request.path %}active{% endif %}">📅 Календарь</a>
-
-            <!-- 👥 Сотрудники -->
-            <a href="{% url 'directory' %}" class="list-group-item list-group-item-action {% if '/directory/' in request.path %}active{% endif %}">👥 Сотрудники</a>
-
-            <!--  Отсутствующие -->
-            <a href="{% url 'absences' %}" class="list-group-item list-group-item-action {% if request.path == '/absences/' %}active{% endif %}">📋 Отсутствующие</a>
-                       
-            <!--  Оповещения (ИСПРАВЛЕНО: точное совпадение пути) -->
-            <a href="{% url 'announcements' %}" class="list-group-item list-group-item-action {% if request.path == '/announcements/' %}active{% endif %}">📢 Оповещения</a>
-            
-            <!-- 📤 Создать оповещение -->
+            <a href="{% url 'dashboard' %}" class="list-group-item list-group-item-action {% if request.path == '/dashboard/' %}active{% endif %}">
+              🏠 Главная
+            </a>
+            <a href="{% url 'calendar' %}" class="list-group-item list-group-item-action {% if '/calendar/' in request.path %}active{% endif %}">
+              📅 Календарь
+            </a>
+            <a href="{% url 'directory' %}" class="list-group-item list-group-item-action {% if '/directory/' in request.path %}active{% endif %}">
+              👥 Сотрудники
+            </a>
+            <a href="{% url 'absences' %}" class="list-group-item list-group-item-action {% if request.path == '/absences/' %}active{% endif %}">
+              📋 Отсутствующие
+            </a>
+            <a href="{% url 'announcements' %}" class="list-group-item list-group-item-action {% if request.path == '/announcements/' %}active{% endif %}">
+              📢 Оповещения
+            </a>
             {% if user.role in 'adm,sup,sid' %}
-              <a href="{% url 'announcement_create' %}" class="list-group-item list-group-item-action {% if request.path == '/announcements/create/' %}active{% endif %}">📤 Создать оповещение</a>
+              <a href="{% url 'announcement_create' %}" class="list-group-item list-group-item-action {% if request.path == '/announcements/create/' %}active{% endif %}">
+                📤 Создать оповещение
+              </a>
             {% endif %}
-
-            <!-- 📝 Уведомить об отсутствии -->
-            <a href="{% url 'absence_report' %}" class="list-group-item list-group-item-action {% if request.path == '/absence/report/' %}active{% endif %}">📝 Уведомить об отсутствии</a>
-            
-            <!-- Аналитика -->
-            <a href="{% url 'analytics' %}" class="list-group-item list-group-item-action {% if '/analytics/' in request.path %}active{% endif %}">📊 Аналитика</a>
-            
-            <!--  Подразделения -->
-            <a href="{% url 'departments' %}" class="list-group-item list-group-item-action {% if '/departments/' in request.path %}active{% endif %}">🏢 Подразделения</a>
-
-            <!-- Справка ВМедА -->
-            <a href="{% url 'vmeda_info' %}" class="list-group-item list-group-item-action {% if '/vmeda/' in request.path %}active{% endif %}">🏥 Справка ВМедА</a>
-
-            <!-- 🆘 Заявки в IT -->
-            <a href="{% url 'ticket_list' %}" class="list-group-item list-group-item-action {% if '/it/' in request.path %}active{% endif %}">🆘 Заявки в IT</a>
-
-            <!-- ⚙️ Управление (только Sup/Adm) -->
+            <a href="{% url 'absence_report' %}" class="list-group-item list-group-item-action {% if request.path == '/absence/report/' %}active{% endif %}">
+              📝 Уведомить об отсутствии
+            </a>
+            <a href="{% url 'analytics' %}" class="list-group-item list-group-item-action {% if '/analytics/' in request.path %}active{% endif %}">
+              📊 Аналитика
+            </a>
+            <a href="{% url 'departments' %}" class="list-group-item list-group-item-action {% if '/departments/' in request.path %}active{% endif %}">
+              🏢 Подразделения
+            </a>
+            <a href="{% url 'vmeda_info' %}" class="list-group-item list-group-item-action {% if '/vmeda/' in request.path %}active{% endif %}">
+              🏥 Справка ВМедА
+            </a>
+            <a href="{% url 'ticket_list' %}" class="list-group-item list-group-item-action {% if '/it/' in request.path %}active{% endif %}">
+              🆘 Заявки в IT
+            </a>
             {% if user.role in 'sup,adm' %}
-              <a href="{% url 'employee_management' %}" class="list-group-item list-group-item-action {% if '/sup/management/' in request.path %}active{% endif %}">⚙️ Управление</a>
+              <a href="{% url 'employee_management' %}" class="list-group-item list-group-item-action {% if '/sup/management/' in request.path %}active{% endif %}">
+                ⚙️ Управление
+              </a>
             {% endif %}
-          
           </div>
         </div>
-        <div class="col-md-9">
+        
+        <!-- 📄 Контент страницы -->
+        <div class="col-md-9 col-lg-9">
           {% block content %}{% endblock %}
         </div>
       </div>
@@ -233,18 +442,17 @@
   <script src="{% static 'vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
 
   <!-- 🔧 Конфигурация URL для JS -->
-<script>
-  window.DJANGO_CONFIG = {
-    urls: {
-      apiNotifications: "{% url 'api_notifications' %}",        // /api/notifications/
-      apiNotifCount: "{% url 'api_notif_count' %}",             // /api/notifications/count/
-      apiNotifReadAll: "{% url 'api_notif_read_all' %}",        // /api/notifications/read-all/
-      // 👇 ИСПРАВЛЕНО: теперь ведёт на правильный эндпоинт чтения одного уведомления
-      apiNotifRead: "{% url 'api_notif_read' pk=0 %}".replace('/0/', '/'), 
-      apiSearch: "{% url 'api_search' %}"
-    }
-  };
-</script>
+  <script>
+    window.DJANGO_CONFIG = {
+      urls: {
+        apiNotifications: "{% url 'api_notifications' %}",
+        apiNotifCount: "{% url 'api_notif_count' %}",
+        apiNotifReadAll: "{% url 'api_notif_read_all' %}",
+        apiNotifRead: "{% url 'api_notif_read' pk=0 %}".replace('/0/', '/'),
+        apiSearch: "{% url 'api_search' %}"
+      }
+    };
+  </script>
 
   <!-- Наш внешний скрипт -->
   <script src="{% static 'core/js/main.js' %}"></script>

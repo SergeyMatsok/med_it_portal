@@ -1,33 +1,148 @@
 {% extends 'core/base.html' %}
 {% block content %}
-<h3>👥 Сотрудники отдела МИТ</h3>
 
-<form method="get" class="mb-3">
-  <div class="input-group">
-    <input type="text" name="q" class="form-control" placeholder="🔍 Поиск по ФИО или отделу..." value="{{ request.GET.q }}">
-    <button class="btn btn-primary">Найти</button>
-    {% if request.GET.q %}<a href="{% url 'directory' %}" class="btn btn-outline-secondary">Сбросить</a>{% endif %}
-  </div>
-</form>
+<!-- Заголовок раздела -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h4 class="mb-0 fw-bold">👥 Сотрудники отдела МИТ</h4>
+  <span class="badge bg-info bg-opacity-10 text-info">
+    Всего: {{ employees|length }}
+  </span>
+</div>
 
-<div class="list-group">
-  {% for emp in employees %}
-    <div class="list-group-item">
-      <div class="d-flex w-100 justify-content-between">
-        <h5 class="mb-1">{{ emp }}</h5>
-        <small class="text-muted">{{ emp.get_role_display }}</small>
+<!-- 🔍 Форма поиска -->
+<div class="card mb-4">
+  <div class="card-body p-3">
+    <form method="get" class="d-flex gap-2">
+      <div class="flex-grow-1">
+        <input type="text" name="q" class="form-control" 
+               placeholder="🔍 Поиск по ФИО, отделу или должности..." 
+               value="{{ request.GET.q }}">
       </div>
-      <p class="mb-1">
-        <strong>Отдел:</strong> {{ emp.department.name|default:"Не назначено" }}| 
-        <strong>Кабинет:</strong> {{ emp.office|default:"—" }}
-      </p>
-      <small>
-        📞 {{ emp.phone_external|default:"—" }} | 
-        🔹 {{ emp.phone_internal|default:"—" }}
-      </small>
+      <button class="btn btn-primary px-4" type="submit">Найти</button>
+      {% if request.GET.q %}
+        <a href="{% url 'directory' %}" class="btn btn-outline-secondary">✕</a>
+      {% endif %}
+    </form>
+  </div>
+</div>
+
+<!-- 👥 Список сотрудников -->
+<div class="row g-3">
+  {% for emp in employees %}
+    <div class="col-md-6 col-lg-4">
+      <div class="card h-100 hover-shadow">
+        <div class="card-body">
+          
+          <!-- Имя и роль -->
+          <div class="d-flex justify-content-between align-items-start mb-3">
+            <div>
+              <h5 class="card-title mb-1 fw-semibold">{{ emp }}</h5>
+              <span class="badge bg-secondary bg-opacity-10 text-secondary small">
+                {{ emp.get_role_display }}
+              </span>
+            </div>
+            <!-- Статус (опционально) -->
+            {% if emp.is_active %}
+              <span class="badge bg-success bg-opacity-10 text-success">● Активен</span>
+            {% else %}
+              <span class="badge bg-danger bg-opacity-10 text-danger">● Не активен</span>
+            {% endif %}
+          </div>
+
+          <!-- Информация -->
+          <div class="small text-muted mb-3">
+            <div class="mb-2">
+              <strong>🏢 Отдел:</strong><br>
+              <span class="text-dark">{{ emp.department.name|default:"Не назначено" }}</span>
+            </div>
+            <div class="mb-2">
+              <strong>🚪 Кабинет:</strong><br>
+              <span class="text-dark">{{ emp.office|default:"—" }}</span>
+            </div>
+            <div>
+              <strong>📞 Телефоны:</strong><br>
+              <span class="text-dark">
+                {% if emp.phone_external %}Город: {{ emp.phone_external }}{% endif %}
+                {% if emp.phone_external and emp.phone_internal %} | {% endif %}
+                {% if emp.phone_internal %}Внутр: {{ emp.phone_internal }}{% endif %}
+                {% if not emp.phone_external and not emp.phone_internal %}—{% endif %}
+              </span>
+            </div>
+          </div>
+
+          <!-- Действия (опционально) -->
+          {% if user.role in 'adm,sup' %}
+          <div class="d-flex gap-2 pt-2 border-top">
+            <a href="#" class="btn btn-sm btn-outline-primary flex-grow-1">✏️ Ред.</a>
+            <a href="#" class="btn btn-sm btn-outline-danger flex-grow-1">🗑️</a>
+          </div>
+          {% endif %}
+
+        </div>
+      </div>
     </div>
   {% empty %}
-    <div class="list-group-item text-muted">Сотрудники не найдены</div>
+    <!-- Пустой результат -->
+    <div class="col-12">
+      <div class="card">
+        <div class="card-body text-center py-5">
+          <div class="display-4 mb-3">🔍</div>
+          <h5 class="mb-2">Сотрудники не найдены</h5>
+          <p class="text-muted mb-3">Попробуйте изменить запрос или сбросить фильтр</p>
+          {% if request.GET.q %}
+            <a href="{% url 'directory' %}" class="btn btn-primary">Сбросить поиск</a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
   {% endfor %}
 </div>
+
+<!-- Пагинация (если есть) -->
+{% if employees.has_other_pages %}
+<nav class="mt-4">
+  <ul class="pagination justify-content-center">
+    {% if employees.has_previous %}
+      <li class="page-item">
+        <a class="page-link" href="?q={{ request.GET.q }}&page={{ employees.previous_page_number }}">← Назад</a>
+      </li>
+    {% endif %}
+    
+    {% for num in employees.paginator.page_range %}
+      {% if employees.number == num %}
+        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+      {% elif num > employees.number|add:'-3' and num < employees.number|add:'3' %}
+        <li class="page-item">
+          <a class="page-link" href="?q={{ request.GET.q }}&page={{ num }}">{{ num }}</a>
+        </li>
+      {% endif %}
+    {% endfor %}
+    
+    {% if employees.has_next %}
+      <li class="page-item">
+        <a class="page-link" href="?q={{ request.GET.q }}&page={{ employees.next_page_number }}">Вперёд →</a>
+      </li>
+    {% endif %}
+  </ul>
+</nav>
+{% endif %}
+
+<!-- 🎨 Доп. стили для карточек сотрудников -->
+<style>
+  .hover-shadow {
+    transition: var(--transition);
+  }
+  .hover-shadow:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lg) !important;
+    border-color: var(--primary) !important;
+  }
+  .card-title {
+    font-size: 1.1rem;
+  }
+  .badge {
+    font-weight: 500;
+  }
+</style>
+
 {% endblock %}

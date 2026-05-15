@@ -1,55 +1,83 @@
 {% extends 'core/base.html' %}
 {% block content %}
-<h3>🏥 Военно-медицинская академия им. С.М. Кирова</h3>
+
+<!-- Заголовок раздела -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h4 class="mb-0 fw-bold">🏥 ВМедА им. С.М. Кирова</h4>
+  <span class="badge bg-info bg-opacity-10 text-info">📚 Справочная информация</span>
+</div>
+
 <p class="text-muted mb-4">Справочная информация для сотрудников отдела МИТ</p>
 
-<!--  Генерация блоков из базы данных -->
-<div class="row">
+<!-- 📦 Блоки из базы данных -->
+<div class="row g-4">
   {% for section in sections %}
-    <div class="col-md-6 mb-4">
-      <div class="card h-100 border-primary">
-        <div class="card-header bg-primary text-white">
-          <h5 class="mb-0">{{ section.title }}</h5>
+    <div class="col-md-6">
+      <div class="card h-100">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0 fw-semibold">{{ section.title }}</h5>
+          <span class="badge bg-primary bg-opacity-10 text-primary">📄 Раздел</span>
         </div>
         <div class="card-body">
-          <!-- nl2br эффект: переносы строк отображаются как <br> -->
-          <p class="card-text">{{ section.content|linebreaks }}</p>
+          <p class="card-text text-muted mb-0" style="white-space: pre-line;">
+            {{ section.content }}
+          </p>
         </div>
       </div>
     </div>
   {% empty %}
     <div class="col-12">
-      <div class="alert alert-warning">Информация временно недоступна. Обратитесь в техподдержку.</div>
+      <div class="alert alert-warning d-flex align-items-center">
+        <span class="me-2">⚠️</span>
+        <div>Информация временно недоступна. Обратитесь в техподдержку.</div>
+      </div>
     </div>
   {% endfor %}
 </div>
 
-<!-- 🔗 Полезные ссылки (статический блок, если не нужен в БД) -->
-<div class="card mb-4">
-  <div class="card-header">🔗 Полезные ссылки</div>
+<!-- 🔗 Полезные ссылки -->
+<div class="card mt-4">
+  <div class="card-header">
+    <h5 class="mb-0 fw-semibold">🔗 Полезные ссылки</h5>
+  </div>
   <div class="card-body">
-    <div class="row">
-      <div class="col-md-4">
-        <a href="http://www.vmeda.local/" target="_blank" class="btn btn-outline-primary btn-sm w-100 mb-2">🌐 ВМедА</a>
-        <a href="{% url 'directory' %}" class="btn btn-outline-secondary btn-sm w-100 mb-2">👥 Сотрудники</a>
+    <div class="row g-3">
+      <div class="col-md-4 col-sm-6">
+        <a href="http://www.vmeda.local/" target="_blank" class="btn btn-outline-primary w-100 py-2">
+          🌐 Официальный сайт ВМедА
+        </a>
       </div>
-      <div class="col-md-4">
-        <a href="{% url 'ticket_list' %}" class="btn btn-outline-danger btn-sm w-100">🆘 Заявка в ИТ</a>
+      <div class="col-md-4 col-sm-6">
+        <a href="{% url 'directory' %}" class="btn btn-outline-secondary w-100 py-2">
+          👥 Сотрудники
+        </a>
+      </div>
+      <div class="col-md-4 col-sm-6">
+        <a href="{% url 'ticket_list' %}" class="btn btn-outline-danger w-100 py-2">
+          🆘 Заявка в ИТ
+        </a>
       </div>
     </div>
   </div>
 </div>
 
-<!-- 📄 Кнопка скачивания памяттки -->
+<!-- 📥 Скачать памятку -->
 {% if brochure %}
-<div class="alert alert-info d-flex justify-content-between align-items-center">
-  <div>
-    <strong>📥 Скачать памятку сотрудника</strong>
-    <span class="small d-block">Обновлено: {{ brochure.uploaded_at|date:"d.m.Y" }}</span>
+<div class="card mt-4 border-info">
+  <div class="card-body d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
+    <div class="d-flex align-items-center gap-3">
+      <div class="display-4">📄</div>
+      <div>
+        <h6 class="mb-1 fw-semibold">Скачать памятку сотрудника</h6>
+        <p class="text-muted small mb-0">
+          Обновлено: <strong>{{ brochure.uploaded_at|date:"d.m.Y" }}</strong>
+        </p>
+      </div>
+    </div>
+    <a href="{{ brochure.file.url }}" class="btn btn-primary px-4 py-2" download>
+      ⬇️ Скачать PDF
+    </a>
   </div>
-  <a href="{{ brochure.file.url }}" class="btn btn-success" download>
-    ⬇️ Скачать PDF
-  </a>
 </div>
 {% endif %}
 

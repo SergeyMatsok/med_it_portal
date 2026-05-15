@@ -73,13 +73,13 @@ class EmployeeDirectoryView(LoginRequiredMixin, ListView):
     context_object_name = 'employees'
     
     def get_queryset(self):
-        qs = Employee.objects.filter(is_active=True)
+        qs = Employee.objects.filter(is_active=True, is_superuser=False)
         q = self.request.GET.get('q')
         if q and len(q) >= 2:
             qs = qs.filter(
                 Q(first_name__icontains=q) | 
                 Q(last_name__icontains=q) | 
-                Q(department__icontains=q)
+                Q(department__name__icontains=q)
             )
         return qs.order_by('last_name', 'first_name')
 
