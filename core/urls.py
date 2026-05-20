@@ -42,7 +42,8 @@ urlpatterns = [
     path('it/tickets/<int:pk>/', views.TicketDetailView.as_view(), name='ticket_detail'),
     
     # === API поиска ===
-    path('api/search/', views.search_employees, name='api_search'),
+    # path('api/search/', views.search_employees, name='api_search'),
+    path('api/search/', views.api_search, name='api_search'),
     
     # === Справочники и аналитика ===
     path('departments/', views.DepartmentsView.as_view(), name='departments'),

@@ -1,0 +1,19 @@
+{% for emp in employees %}
+  <a href="{% url 'directory' %}?q={{ emp.last_name }}" 
+     class="search-item d-block px-3 py-2 text-decoration-none border-bottom"
+     hx-on:click="document.getElementById('searchInput').value='{{ emp }}'; document.getElementById('searchResults').classList.add('d-none');">
+    <div class="d-flex justify-content-between align-items-center">
+      <span class="fw-semibold">{{ emp }}</span>
+      <small class="text-muted">{{ emp.department.name|default:"—" }}</small>
+    </div>
+    {% if emp.office or emp.phone_external %}
+    <div class="small text-muted mt-1">
+      {% if emp.office %}🚪 {{ emp.office }}{% endif %}
+      {% if emp.office and emp.phone_external %} | {% endif %}
+      {% if emp.phone_external %}📞 {{ emp.phone_external }}{% endif %}
+    </div>
+    {% endif %}
+  </a>
+{% empty %}
+  <div class="px-3 py-2 text-muted small">Ничего не найдено</div>
+{% endfor %}

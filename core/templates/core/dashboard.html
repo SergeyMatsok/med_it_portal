@@ -2,7 +2,65 @@
 {% block content %}
   <h2>👋 Добро пожаловать, {{ user }}</h2>
   <p class="text-muted">Ваша роль: {{ user.get_role_display }}</p>
-  
+  <!-- 🎂 Блок дней рождения -->
+    {% if today_birthdays or upcoming_birthdays %}
+    <div class="row mb-4">
+      <div class="col-12">
+        
+        <!-- 🎉 Сегодня -->
+        {% if today_birthdays %}
+        <div class="card border-warning mb-3">
+          <div class="card-header bg-warning text-dark d-flex align-items-center gap-2">
+            <span class="fs-4">🎂</span>
+            <h5 class="mb-0">Сегодня день рождения!</h5>
+          </div>
+          <div class="card-body py-2">
+            <div class="d-flex flex-wrap gap-3">
+              {% for item in today_birthdays %}
+              <div class="d-flex align-items-center gap-2 p-2 rounded bg-light">
+                <span class="fs-5">🎈</span>
+                <div>
+                  <span class="fw-semibold">{{ item.employee }}</span>
+                  <span class="text-muted small ms-2">{{ item.department|default:"—" }}</span>
+                  <div class="small text-warning">✨ {{ item.age }} лет!</div>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+        {% endif %}
+        
+        <!-- 🗓️ Ближайшие (если нет сегодняшних — показываем их крупнее) -->
+        {% if upcoming_birthdays %}
+        <div class="card {% if not today_birthdays %}border-primary{% endif %}">
+          <div class="card-header {% if not today_birthdays %}bg-primary text-white{% else %}bg-light{% endif %} d-flex align-items-center gap-2">
+            <span class="fs-4">🗓️</span>
+            <h5 class="mb-0 {% if not today_birthdays %}text-white{% else %}text-dark{% endif %}">
+              {% if not today_birthdays %}Ближайшие дни рождения{% else %}Также скоро{% endif %}
+            </h5>
+          </div>
+          <div class="card-body py-2">
+            <div class="d-flex flex-wrap gap-2">
+              {% for item in upcoming_birthdays %}
+              <div class="d-flex align-items-center gap-2 p-2 rounded border">
+                <span class="badge bg-primary rounded-pill">{{ item.days_left }} дн.</span>
+                <div>
+                  <span class="fw-semibold">{{ item.employee }}</span>
+                  <span class="text-muted small ms-2">{{ item.employee.department|default:"—" }}</span>
+                  <div class="small text-muted">🎂 {{ item.age }} лет • {{ item.employee.birth_date|date:"d.m" }}</div>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+        {% endif %}
+        
+      </div>
+    </div>
+    {% endif %}
+
   <div class="card mb-3">
     <div class="card-header"> Ближайшие события</div>
     <ul class="list-group list-group-flush">

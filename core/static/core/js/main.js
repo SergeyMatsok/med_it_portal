@@ -27,27 +27,24 @@ function getCsrfToken() {
     return '';
 }
 
-// 🔍 Логика поиска
+//  Логика поиска (исправленная)
 function initSearch() {
     const searchInput = document.getElementById('searchInput');
     if (!searchInput) return;
 
+    // Показываем/скрываем блок результатов после запроса
     searchInput.addEventListener('htmx:afterRequest', function(evt) {
         const res = document.getElementById('searchResults');
-        res.classList.toggle('d-none', !evt.detail.xhr.responseText.trim());
-    });
-
-    searchInput.addEventListener('htmx:afterOnLoad', function(evt) {
-        try {
-            const data = JSON.parse(evt.detail.xhr.responseText);
-            const res = document.getElementById('searchResults');
-            res.innerHTML = data.map(u => 
-                `<a href="/directory/?q=${encodeURIComponent(u.last_name + ' ' + u.first_name)}">${u.last_name} ${u.first_name} <small class="text-muted">(${u.department})</small></a>`
-            ).join('');
-        } catch(e) {
-            console.error("Search parse error:", e);
+        const content = evt.detail.xhr.responseText.trim();
+        
+        // Если есть контент — показываем, если пусто — скрываем
+        if (content && content !== '') {
+            res.classList.remove('d-none');
+        } else {
+            res.classList.add('d-none');
         }
     });
+    
 }
 
 //  Логика уведомлений
