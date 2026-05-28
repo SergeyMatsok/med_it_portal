@@ -4,193 +4,232 @@
   <h3>📅 Мой календарь</h3>
   <a href="{% url 'event_add' %}" class="btn btn-primary">+ Добавить событие</a>
 </div>
+<!-- Фильтр над списком событий -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div class="form-check form-switch">
+    <input class="form-check-input" type="checkbox" id="showPastToggle" 
+           {% if request.GET.show_past == '1' %}checked{% endif %}
+           onchange="window.location.href='?show_past=' + (this.checked ? '1' : '0')">
+    <label class="form-check-label small fw-semibold" for="showPastToggle">
+      Показать прошедшие
+    </label>
+  </div>
+</div>
 
 <div class="list-group">
-  {% for event in events %}
-    <div class="list-group-item">
-      <div class="d-flex w-100 justify-content-between align-items-start">
-        <div>
-          <h5 class="mb-1">{{ event.title }}</h5>
-          <p class="mb-1 text-muted">{{ event.description|default:"" }}</p>
-          <small class="text-muted">
-            🕐 {{ event.start_dt|date:"d.m.Y H:i" }}
-            {% if event.end_dt %} — {{ event.end_dt|date:"H:i" }}{% endif %}
-            {% if event.visibility != 'private' %} | 🌐 {{ event.get_visibility_display }}{% endif %}
-            {% if event.shared_with.all %} | 👥 Поделено с: {{ event.shared_with.count }}{% endif %}
-          </small>
-        </div>
-        {% if event.creator == user %}
-          <div class="btn-group btn-group-sm ms-2">
-            <button type="button" class="btn btn-outline-info" 
-                    onclick="openShareModal({{ event.id }})">
-              🔗 Поделиться
-            </button>
-            <a href="{% url 'event_delete' event.id %}" 
-               class="btn btn-outline-danger" 
-               onclick="return confirm('Удалить событие?')">✕</a>
+    {% for event in events %}
+      <div class="list-group-item border-0 mb-2 p-3" style="
+        border-radius: 0.5rem;
+        {% if event.visibility == 'private' %}background: #cccaca;
+        {% elif event.visibility == 'dept' %}background: #eff6ff;
+        {% else %}background: #f0fdf4;
+        {% endif %}
+      ">
+        <div class="d-flex w-100 justify-content-between align-items-start">
+          <div class="flex-grow-1">
+            <h5 class="mb-1 d-flex align-items-center gap-2">
+              {% if event.visibility == 'private' %}
+              {% elif event.visibility == 'dept' %}
+              {% else %}{% endif %}
+              {{ event.title }}
+            </h5>
+            <p class="mb-1 text-muted small">{{ event.description|default:"" }}</p>
+            <small class="text-muted">
+              🕐 {{ event.start_dt|date:"d.m.Y H:i" }}
+              {% if event.end_dt %}
+                {% if event.start_dt|date:"d.m.Y" == event.end_dt|date:"d.m.Y" %}
+                  — {{ event.end_dt|date:"H:i" }}
+                {% else %}
+                  — {{ event.end_dt|date:"d.m.Y H:i" }}
+                {% endif %}
+              {% endif %}
+              
+              <span class="badge {% if event.visibility == 'private' %}bg-secondary{% elif event.visibility == 'dept' %}bg-primary{% else %}bg-success{% endif %} ms-2">
+                {{ event.get_visibility_display }}
+              </span>
+              
+              {% if event.shared_with.all %} | 👥 Поделено с: {{ event.shared_with.count }}{% endif %}
+            </small>
           </div>
 
-          <!-- Модальное окно -->
-          <div class="modal fade" id="shareModal{{ event.id }}" tabindex="-1">
-            <div class="modal-dialog modal-dialog-centered modal-sm">
-              <div class="modal-content">
-                <div class="modal-header py-2">
-                  <h6 class="modal-title">📤 Поделиться: {{ event.title }}</h6>
-                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body py-2">
-                  <input type="text" class="form-control form-control-sm mb-2" 
-                         id="shareSearch{{ event.id }}" placeholder="🔍 Начните вводить ФИО..." autocomplete="off">
-                  <div id="shareResults{{ event.id }}" class="list-group list-group-flush small mb-2" 
-                       style="max-height:150px; overflow-y:auto"></div>
-                  <div class="text-center text-muted small mb-2" id="shareSelected{{ event.id }}">
-                    Сотрудник не выбран
-                  </div>
-                  <div id="shareMsg{{ event.id }}"></div>
-                </div>
-                <div class="modal-footer py-2">
-                  <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                  <button type="button" class="btn btn-sm btn-primary" id="shareBtn{{ event.id }}" 
-                          onclick="sendShare({{ event.id }})" disabled>Отправить</button>
-                </div>
-              </div>
+          {% if event.creator == user %}
+            <div class="btn-group btn-group-sm ms-2 flex-shrink-0">
+              <button type="button" class="btn btn-outline-info" 
+                      data-bs-toggle="modal" 
+                      data-bs-target="#shareModal"
+                      data-event-id="{{ event.id }}"
+                      data-event-title="{{ event.title|escapejs }}"
+                      onclick="prepareShareModal({{ event.id }}, '{{ event.title|escapejs }}')">
+                🔗 Поделиться
+              </button>
+              <a href="{% url 'event_delete' event.id %}" 
+                class="btn btn-outline-danger" 
+                onclick="return confirm('Удалить событие?')">✕</a>
             </div>
-          </div>
-        {% endif %}
+          {% endif %}
+        </div>
+      </div>
+    {% empty %}
+      <div class="list-group-item text-muted border-0">Нет запланированных событий</div>
+    {% endfor %}
+</div>
+
+<!-- МОДАЛКА - одна на все события, ВНЕ цикла -->
+<div class="modal fade" id="shareModal" tabindex="-1" aria-hidden="true" 
+     style="z-index: 999999 !important;">
+  <div class="modal-dialog modal-dialog-centered modal-sm" 
+       style="z-index: 1000000 !important; position: relative;">
+    <div class="modal-content" 
+         style="z-index: 1000001 !important; position: relative;">
+      <div class="modal-header py-2">
+        <h6 class="modal-title" id="shareModalTitle">📤 Поделиться</h6>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" 
+                style="z-index: 1000002 !important;"></button>
+      </div>
+      <div class="modal-body py-2">
+        <input type="text" class="form-control form-control-sm mb-2" 
+               id="shareSearch" placeholder="🔍 Начните вводить ФИО..." 
+               autocomplete="off"
+               style="z-index: 1000003 !important; position: relative;">
+        <div id="shareResults" class="list-group list-group-flush small mb-2" 
+             style="max-height:150px; overflow-y:auto; z-index: 1000004 !important;"></div>
+        <div class="text-center text-muted small mb-2" id="shareSelected">
+          Сотрудник не выбран
+        </div>
+        <div id="shareMsg"></div>
+      </div>
+      <div class="modal-footer py-2">
+        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Отмена</button>
+        <button type="button" class="btn btn-sm btn-primary" id="shareBtn" disabled>Отправить</button>
       </div>
     </div>
-  {% empty %}
-    <div class="list-group-item text-muted">Нет запланированных событий</div>
-  {% endfor %}
+  </div>
 </div>
 
 <script>
-// Глобальный объект для хранения выбранных сотрудников
-const shareSelections = {};
-
-function openShareModal(eventId) {
-  document.getElementById('shareSearch' + eventId).value = '';
-  document.getElementById('shareResults' + eventId).innerHTML = '';
-  document.getElementById('shareSelected' + eventId).innerHTML = 'Сотрудник не выбран';
-  document.getElementById('shareSelected' + eventId).className = 'text-center text-muted small mb-2';
-  document.getElementById('shareBtn' + eventId).disabled = true;
-  document.getElementById('shareMsg' + eventId).innerHTML = '';
-  delete shareSelections[eventId];
+// 🔝 Перемещаем модалку в body при загрузке
+document.addEventListener('DOMContentLoaded', function() {
+  const modal = document.getElementById('shareModal');
+  if (modal && modal.parentElement !== document.body) {
+    document.body.appendChild(modal);
+    console.log('✅ Модалка перемещена в <body>');
+  }
   
-  const modal = new bootstrap.Modal(document.getElementById('shareModal' + eventId));
-  modal.show();
-}
+  // Инициализация остальной логики
+  initShareModal();
+});
 
-function setupShareSearch(eventId) {
-  const input = document.getElementById('shareSearch' + eventId);
-  const results = document.getElementById('shareResults' + eventId);
-  const selected = document.getElementById('shareSelected' + eventId);
-  const btn = document.getElementById('shareBtn' + eventId);
-  let timer;
+let currentEventId = null;
+let currentSelection = null;
 
-  input.addEventListener('input', function() {
-    clearTimeout(timer);
-    const q = this.value.trim();
+function initShareModal() {
+  const searchInput = document.getElementById('shareSearch');
+  const resultsDiv = document.getElementById('shareResults');
+  const selectedDiv = document.getElementById('shareSelected');
+  const shareBtn = document.getElementById('shareBtn');
+  
+  if (!searchInput) return;
+  
+  // Поиск
+  let searchTimer;
+  searchInput.addEventListener('input', function() {
+    clearTimeout(searchTimer);
+    const query = this.value.trim();
     
-    if (q.length < 2) {
-      results.innerHTML = '';
+    if (query.length < 2) {
+      resultsDiv.innerHTML = '';
       return;
     }
     
-    results.innerHTML = '<div class="px-2 py-1 text-muted">Поиск...</div>';
+    resultsDiv.innerHTML = '<div class="px-2 py-1 text-muted">🔍 Поиск...</div>';
     
-    timer = setTimeout(() => {
-      fetch(`/api/search/?q=${encodeURIComponent(q)}`)
+    searchTimer = setTimeout(() => {
+      fetch('/api/search/?q=' + encodeURIComponent(query) + '&format=json')
         .then(r => r.json())
         .then(data => {
-          results.innerHTML = '';
-          if (!data.length) {
-            results.innerHTML = '<div class="px-2 py-1 text-muted">Ничего не найдено</div>';
+          resultsDiv.innerHTML = '';
+          if (!data || data.length === 0) {
+            resultsDiv.innerHTML = '<div class="px-2 py-1 text-muted">Ничего не найдено</div>';
             return;
           }
           data.forEach(emp => {
-            const el = document.createElement('button');
-            el.type = 'button';
-            el.className = 'list-group-item list-group-item-action py-1';
-            // 👇 Добавлено отчество в отображение
-            const fullName = `${emp.last_name} ${emp.first_name} ${emp.patronymic || ''}`.trim();
-            el.innerHTML = `${fullName} <small class="text-muted">(${emp.department})</small>`;
-            el.onclick = () => {
-              shareSelections[eventId] = { id: emp.id, name: fullName };
-              selected.innerHTML = `✅ <strong>${fullName}</strong>`;
-              selected.className = 'text-center text-success small mb-2';
-              btn.disabled = false;
-              results.innerHTML = '';
-              input.value = '';
+            const fullName = [emp.last_name, emp.first_name, emp.patronymic].filter(Boolean).join(' ');
+            const dept = emp.department || '—';
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'list-group-item list-group-item-action py-1';
+            btn.innerHTML = `<strong>${fullName}</strong><br><small class="text-muted">${dept}</small>`;
+            btn.onclick = () => {
+              currentSelection = { id: emp.id, name: fullName };
+              selectedDiv.innerHTML = '✅ <strong>' + fullName + '</strong>';
+              selectedDiv.className = 'text-center text-success small mb-2';
+              shareBtn.disabled = false;
+              resultsDiv.innerHTML = '';
+              searchInput.value = '';
             };
-            results.appendChild(el);
+            resultsDiv.appendChild(btn);
           });
         })
         .catch(err => {
-          console.error('Search error:', err);
-          results.innerHTML = '<div class="px-2 py-1 text-danger">Ошибка поиска</div>';
+          resultsDiv.innerHTML = '<div class="px-2 py-1 text-danger">Ошибка поиска</div>';
         });
     }, 300);
   });
+  
+  // Отправка
+  shareBtn.addEventListener('click', function() {
+    if (!currentEventId || !currentSelection) {
+      alert('⚠️ Выберите сотрудника');
+      return;
+    }
+    
+    const msgBox = document.getElementById('shareMsg');
+    msgBox.innerHTML = '<div class="alert alert-info p-1 small mb-0">⏳ Отправка...</div>';
+    shareBtn.disabled = true;
+    
+    fetch('/calendar/share/' + currentEventId + '/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'X-CSRFToken': getCsrfToken()
+      },
+      body: 'employee_id=' + currentSelection.id
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.status === 'ok') {
+        msgBox.innerHTML = '<div class="alert alert-success p-1 small mb-0">✅ Отправлено!</div>';
+        setTimeout(() => {
+          bootstrap.Modal.getInstance(document.getElementById('shareModal')).hide();
+          location.reload();
+        }, 800);
+      } else {
+        msgBox.innerHTML = '<div class="alert alert-danger p-1 small mb-0">❌ ' + (data.message || 'Ошибка') + '</div>';
+        shareBtn.disabled = false;
+      }
+    })
+    .catch(err => {
+      msgBox.innerHTML = '<div class="alert alert-danger p-1 small mb-0">❌ Ошибка сети</div>';
+      shareBtn.disabled = false;
+    });
+  });
 }
 
-function sendShare(eventId) {
-  const selection = shareSelections[eventId];
-  const msgBox = document.getElementById('shareMsg' + eventId);
-  const btn = document.getElementById('shareBtn' + eventId);
-  
-  if (!selection) {
-    msgBox.innerHTML = '<div class="alert alert-warning p-1 small mb-0">⚠️ Выберите сотрудника</div>';
-    return;
-  }
-  
-  btn.disabled = true;
-  msgBox.innerHTML = '<div class="alert alert-info p-1 small mb-0">Отправка...</div>';
-  
-  fetch(`/calendar/share/${eventId}/`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      'X-CSRFToken': getCsrfToken()
-    },
-    body: `employee_id=${selection.id}`
-  })
-  .then(r => r.json())
-  .then(data => {
-    if (data.status === 'ok') {
-      msgBox.innerHTML = '<div class="alert alert-success p-1 small mb-0">✅ Отправлено!</div>';
-      setTimeout(() => {
-        bootstrap.Modal.getInstance(document.getElementById('shareModal' + eventId)).hide();
-        location.reload();
-      }, 800);
-    } else {
-      msgBox.innerHTML = `<div class="alert alert-danger p-1 small mb-0">❌ ${data.message || 'Ошибка'}</div>`;
-      btn.disabled = false;
-    }
-  })
-  .catch(err => {
-    console.error('Share error:', err);
-    msgBox.innerHTML = '<div class="alert alert-danger p-1 small mb-0">❌ Ошибка сети</div>';
-    btn.disabled = false;
-  });
+function prepareShareModal(eventId, eventTitle) {
+  currentEventId = eventId;
+  currentSelection = null;
+  document.getElementById('shareModalTitle').textContent = '📤 Поделиться: ' + eventTitle;
+  document.getElementById('shareSearch').value = '';
+  document.getElementById('shareResults').innerHTML = '';
+  document.getElementById('shareSelected').textContent = 'Сотрудник не выбран';
+  document.getElementById('shareSelected').className = 'text-center text-muted small mb-2';
+  document.getElementById('shareBtn').disabled = true;
+  document.getElementById('shareMsg').innerHTML = '';
 }
 
 function getCsrfToken() {
   const cookie = document.cookie.split('; ').find(row => row.startsWith('csrftoken='));
   return cookie ? cookie.split('=')[1] : '';
 }
-
-document.addEventListener('DOMContentLoaded', function() {
-  {% for event in events %}
-    {% if event.creator == user %}
-    (function() {
-      const input = document.getElementById('shareSearch{{ event.id }}');
-      if (input) {
-        setupShareSearch({{ event.id }});
-      }
-    })();
-    {% endif %}
-  {% endfor %}
-});
 </script>
 {% endblock %}

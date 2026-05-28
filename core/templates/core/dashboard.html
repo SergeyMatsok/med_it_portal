@@ -1,89 +1,225 @@
 {% extends 'core/base.html' %}
 {% block content %}
-  <h2>👋 Добро пожаловать, {{ user }}</h2>
-  <p class="text-muted">Ваша роль: {{ user.get_role_display }}</p>
-  <!-- 🎂 Блок дней рождения -->
-    {% if today_birthdays or upcoming_birthdays %}
-    <div class="row mb-4">
-      <div class="col-12">
-        
-        <!-- 🎉 Сегодня -->
-        {% if today_birthdays %}
-        <div class="card border-warning mb-3">
-          <div class="card-header bg-warning text-dark d-flex align-items-center gap-2">
-            <span class="fs-4">🎂</span>
-            <h5 class="mb-0">Сегодня день рождения!</h5>
-          </div>
-          <div class="card-body py-2">
-            <div class="d-flex flex-wrap gap-3">
-              {% for item in today_birthdays %}
-              <div class="d-flex align-items-center gap-2 p-2 rounded bg-light">
-                <span class="fs-5">🎈</span>
+
+<!-- 🎉 Приветствие -->
+<div class="row mb-4">
+  <div class="col-12">
+    <h2 class="mb-1">👋 Добрый день, {{ user.first_name }}!</h2>
+    <p class="text-muted mb-0">📅 Сегодня {{ today|date:"d.m.Y" }}</p>
+  </div>
+</div>
+
+<!-- 1️⃣ Дни рождения (3 блока в ряд) -->
+<div class="row g-3 mb-4">
+  <!-- Сегодня -->
+  <div class="col-md-4">
+    <div class="card h-100 border-warning shadow-sm">
+      <div class="card-header bg-warning bg-opacity-10 border-0">
+        <h5 class="mb-0">🎂 Сегодня</h5>
+      </div>
+      <div class="card-body p-3">
+        {% if birthdays_today %}
+          <ul class="list-unstyled mb-0">
+            {% for emp in birthdays_today %}
+              <li class="mb-2 d-flex align-items-center gap-2">
+                <span class="fs-4">🎁</span>
                 <div>
-                  <span class="fw-semibold">{{ item.employee }}</span>
-                  <span class="text-muted small ms-2">{{ item.department|default:"—" }}</span>
-                  <div class="small text-warning">✨ {{ item.age }} лет!</div>
+                  <strong>{{ emp }}</strong>
+                  {% if emp.department %}<br><small class="text-muted">{{ emp.department.name }}</small>{% endif %}
                 </div>
-              </div>
-              {% endfor %}
-            </div>
-          </div>
-        </div>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="text-muted text-center mb-0">Сегодня именинников нет</p>
         {% endif %}
-        
-        <!-- 🗓️ Ближайшие (если нет сегодняшних — показываем их крупнее) -->
-        {% if upcoming_birthdays %}
-        <div class="card {% if not today_birthdays %}border-primary{% endif %}">
-          <div class="card-header {% if not today_birthdays %}bg-primary text-white{% else %}bg-light{% endif %} d-flex align-items-center gap-2">
-            <span class="fs-4">🗓️</span>
-            <h5 class="mb-0 {% if not today_birthdays %}text-white{% else %}text-dark{% endif %}">
-              {% if not today_birthdays %}Ближайшие дни рождения{% else %}Также скоро{% endif %}
-            </h5>
-          </div>
-          <div class="card-body py-2">
-            <div class="d-flex flex-wrap gap-2">
-              {% for item in upcoming_birthdays %}
-              <div class="d-flex align-items-center gap-2 p-2 rounded border">
-                <span class="badge bg-primary rounded-pill">{{ item.days_left }} дн.</span>
-                <div>
-                  <span class="fw-semibold">{{ item.employee }}</span>
-                  <span class="text-muted small ms-2">{{ item.employee.department|default:"—" }}</span>
-                  <div class="small text-muted">🎂 {{ item.age }} лет • {{ item.employee.birth_date|date:"d.m" }}</div>
-                </div>
-              </div>
-              {% endfor %}
-            </div>
-          </div>
-        </div>
-        {% endif %}
-        
       </div>
     </div>
-    {% endif %}
-
-  <div class="card mb-3">
-    <div class="card-header"> Ближайшие события</div>
-    <ul class="list-group list-group-flush">
-      {% for ev in upcoming_events %}
-        <li class="list-group-item d-flex justify-content-between align-items-center">
-          <div>
-            <strong>{{ ev.title }}</strong><br>
-            <small class="text-muted">{{ ev.start_dt|date:"d.m.Y H:i" }}</small>
-          </div>
-          {% if ev.creator == user %}
-            <a href="{% url 'event_delete' ev.id %}" class="btn btn-sm btn-outline-danger">Удалить</a>
-          {% endif %}
-        </li>
-      {% empty %}
-        <li class="list-group-item text-muted">Нет запланированных событий</li>
-      {% endfor %}
-    </ul>
   </div>
 
-  <form action="{% url 'search' %}" class="mb-3" method="get">
-    <div class="input-group">
-      <input type="text" name="q" class="form-control" placeholder="🔍 Поиск по ФИО или отделу...">
-      <button class="btn btn-primary">Найти</button>
+  <!-- Завтра -->
+  <div class="col-md-4">
+    <div class="card h-100 border-info shadow-sm">
+      <div class="card-header bg-info bg-opacity-10 border-0">
+        <h5 class="mb-0">🎁 Завтра</h5>
+      </div>
+      <div class="card-body p-3">
+        {% if birthdays_tomorrow %}
+          <ul class="list-unstyled mb-0">
+            {% for emp in birthdays_tomorrow %}
+              <li class="mb-2 d-flex align-items-center gap-2">
+                <span class="fs-4">🎈</span>
+                <div>
+                  <strong>{{ emp }}</strong>
+                  {% if emp.department %}<br><small class="text-muted">{{ emp.department.name }}</small>{% endif %}
+                </div>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="text-muted text-center mb-0">Завтра дней рождения нет</p>
+        {% endif %}
+      </div>
     </div>
-  </form>
+  </div>
+
+  <!-- Ближайшие -->
+  <div class="col-md-4">
+    <div class="card h-100 border-success shadow-sm">
+      <div class="card-header bg-success bg-opacity-10 border-0">
+        <h5 class="mb-0">📅 На неделе</h5>
+      </div>
+      <div class="card-body p-3">
+        {% if birthdays_upcoming %}
+          <ul class="list-unstyled mb-0">
+            {% for emp in birthdays_upcoming %}
+              <li class="mb-2 d-flex justify-content-between align-items-center">
+                <div>
+                  <strong>{{ emp }}</strong>
+                  {% if emp.department %}<br><small class="text-muted">{{ emp.department.name }}</small>{% endif %}
+                </div>
+                <span class="badge bg-success rounded-pill">{{ emp.date_of_birth|date:"d.m" }}</span>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="text-muted text-center mb-0">В ближайшие дни нет именинников</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 2️ Отсутствующие + События -->
+<div class="row g-3 mb-4">
+  <!-- Отсутствующие -->
+  <div class="col-md-6">
+    <div class="card h-100 border-danger shadow-sm">
+      <div class="card-header bg-danger bg-opacity-10 border-0 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">📋 Сейчас отсутствуют</h5>
+        <span class="badge bg-danger">{{ current_absences.count }}</span>
+      </div>
+      <div class="card-body p-3">
+        {% if current_absences %}
+          <div class="list-group list-group-flush">
+            {% for absence in current_absences %}
+              <div class="list-group-item px-0 border-bottom mb-2">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div>
+                    <strong>{{ absence.employee }}</strong>
+                    {% if absence.employee.department %}
+                      <br><small class="text-muted">{{ absence.employee.department.name }}</small>
+                    {% endif %}
+                  </div>
+                  <div class="text-end">
+                    {% if absence.reason == 'sick' %}
+                      <span class="badge bg-danger">😷</span>
+                    {% elif absence.reason == 'vacation' %}
+                      <span class="badge bg-success">🌴</span>
+                    {% else %}
+                      <span class="badge bg-secondary">📋</span>
+                    {% endif %}
+                    <br><small class="text-muted">до {{ absence.end_dt|date:"d.m" }}</small>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="text-muted text-center mb-0 py-3">✅ Все на месте</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- События -->
+  <div class="col-md-6">
+    <div class="card h-100 border-primary shadow-sm">
+      <div class="card-header bg-primary bg-opacity-10 border-0 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">📅 Ближайшие события</h5>
+        <a href="{% url 'calendar' %}" class="btn btn-sm btn-outline-primary">Календарь</a>
+      </div>
+      <div class="card-body p-3">
+        {% if upcoming_events %}
+          <div class="list-group list-group-flush">
+            {% for event in upcoming_events %}
+              <div class="list-group-item px-0 border-bottom mb-2">
+                <div class="d-flex justify-content-between align-items-start">
+                  <div>
+                    <strong>{{ event.title }}</strong>
+                    <br>
+                    <small class="text-muted">
+                      {% if event.start_dt.date == today %}Сегодня{% elif event.start_dt.date == today|date:"Y-m-d"|add:"1" %}Завтра{% else %}{{ event.start_dt|date:"d.m" }}{% endif %}, {{ event.start_dt|date:"H:i" }}
+                    </small>
+                  </div>
+                  <span class="badge {% if event.visibility == 'private' %}bg-secondary{% elif event.visibility == 'dept' %}bg-primary{% else %}bg-success{% endif %}">
+                    {{ event.get_visibility_display }}
+                  </span>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="text-muted text-center mb-0 py-3">Нет предстоящих событий</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 3️ Объявления -->
+<div class="card mb-4 border-info shadow-sm">
+  <div class="card-header bg-info bg-opacity-10 border-0 d-flex justify-content-between align-items-center">
+    <h5 class="mb-0"> Важные объявления</h5>
+    <a href="{% url 'announcements' %}" class="btn btn-sm btn-outline-info">Все</a>
+  </div>
+  <div class="card-body p-3">
+    {% if announcements %}
+      <div class="list-group list-group-flush">
+        {% for ann in announcements %}
+          <div class="list-group-item px-0 border-bottom mb-2">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <h6 class="mb-1">{{ ann.title }}</h6>
+                <p class="mb-1 text-muted small">{{ ann.text|truncatewords:25 }}</p>
+                <small class="text-muted">📅 {{ ann.created_at|date:"d.m.Y H:i" }}</small>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="text-muted text-center mb-0 py-3">Нет новых объявлений</p>
+    {% endif %}
+  </div>
+</div>
+
+<!-- 4️⃣ Быстрые действия -->
+<div class="row g-3">
+  <div class="col-md-3 col-sm-6">
+    <a href="{% url 'absence_report' %}" class="btn btn-outline-danger w-100 py-3">
+      <div class="fs-3 mb-2">📝</div>
+      <div class="fw-bold">Отсутствие</div>
+    </a>
+  </div>
+  <div class="col-md-3 col-sm-6">
+    <a href="{% url 'event_add' %}" class="btn btn-outline-primary w-100 py-3">
+      <div class="fs-3 mb-2"></div>
+      <div class="fw-bold">Событие</div>
+    </a>
+  </div>
+  <div class="col-md-3 col-sm-6">
+    <a href="{% url 'support_ticket' %}" class="btn btn-outline-warning w-100 py-3">
+      <div class="fs-3 mb-2">🆘</div>
+      <div class="fw-bold">Заявка в IT</div>
+    </a>
+  </div>
+  <div class="col-md-3 col-sm-6">
+    <a href="{% url 'directory' %}" class="btn btn-outline-success w-100 py-3">
+      <div class="fs-3 mb-2"></div>
+      <div class="fw-bold">Сотрудники</div>
+    </a>
+  </div>
+</div>
+
 {% endblock %}

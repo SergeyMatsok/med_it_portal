@@ -1,0 +1,104 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<div class="row">
+  <div class="col-lg-5 col-md-7">
+    <div class="card shadow-sm border-0 rounded-3">
+      <div class="card-body p-4">
+        <h3 class="mb-4">
+          {% if object %}✏️ Редактировать: {{ object }}{% else %}➕ Новый сотрудник{% endif %}
+        </h3>
+        
+        <form method="post" novalidate class="uniform-form">
+          {% csrf_token %}
+          
+          {% if form.non_field_errors %}
+            <div class="alert alert-danger mb-3">{{ form.non_field_errors }}</div>
+          {% endif %}
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Фамилия <span class="text-danger">*</span></label>
+            {{ form.last_name }}
+            {% if form.last_name.errors %}<div class="text-danger small mt-1">{{ form.last_name.errors.0 }}</div>{% endif %}
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Имя <span class="text-danger">*</span></label>
+            {{ form.first_name }}
+            {% if form.first_name.errors %}<div class="text-danger small mt-1">{{ form.first_name.errors.0 }}</div>{% endif %}
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Отчество</label>
+            {{ form.patronymic }}
+            {% if form.patronymic.errors %}<div class="text-danger small mt-1">{{ form.patronymic.errors.0 }}</div>{% endif %}
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Email</label>
+            {{ form.email }}
+            {% if form.email.errors %}<div class="text-danger small mt-1">{{ form.email.errors.0 }}</div>{% endif %}
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Отдел</label>
+            {{ form.department }}
+            {% if form.department.errors %}<div class="text-danger small mt-1">{{ form.department.errors.0 }}</div>{% endif %}
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Внутренний телефон</label>
+              {{ form.phone_internal }}
+              {% if form.phone_internal.errors %}<div class="text-danger small mt-1">{{ form.phone_internal.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Городской телефон</label>
+              {{ form.phone_external }}
+              {% if form.phone_external.errors %}<div class="text-danger small mt-1">{{ form.phone_external.errors.0 }}</div>{% endif %}
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Кабинет</label>
+            {{ form.office }}
+            {% if form.office.errors %}<div class="text-danger small mt-1">{{ form.office.errors.0 }}</div>{% endif %}
+          </div>
+
+          <div class="mb-4">
+            <div class="form-check form-switch">
+              {{ form.is_active }}
+              <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                Активен
+              </label>
+              {% if form.is_active.errors %}<div class="text-danger small mt-1">{{ form.is_active.errors.0 }}</div>{% endif %}
+            </div>
+          </div>
+
+          <div class="d-flex gap-2 pt-2">
+            <button type="submit" class="btn btn-primary fw-bold px-4">💾 Сохранить</button>
+            <a href="{% url 'directory' %}" class="btn btn-secondary px-4">❌ Отмена</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  /* 🔧 Выравнивание всех полей по ширине */
+  .uniform-form .form-control,
+  .uniform-form .form-select,
+  .uniform-form input,
+  .uniform-form textarea {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box;
+  }
+  
+  /* Убираем фиксированную ширину у checkbox */
+  .uniform-form .form-check-input {
+    width: auto !important;
+    cursor: pointer;
+  }
+</style>
+{% endblock %}

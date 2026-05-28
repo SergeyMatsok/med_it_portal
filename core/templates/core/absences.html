@@ -1,21 +1,165 @@
 {% extends 'core/base.html' %}
 {% block content %}
-<h3>📋 Сейчас отсутствуют</h3>
-
-<div class="list-group">
-  {% for record in absences %}
-    <div class="list-group-item">
-      <h5 class="mb-1">{{ record.employee }}</h5>
-      <p class="mb-1">
-        <strong>Причина:</strong> {{ record.get_reason_display }}
-        {% if record.custom_reason %} — {{ record.custom_reason }}{% endif %}
-      </p>
-      <small class="text-muted">
-         {{ record.start_dt|date:"d.m.Y" }} — {{ record.end_dt|date:"d.m.Y" }}
-      </small>
-    </div>
-  {% empty %}
-    <div class="list-group-item text-muted">Все сотрудники на месте ✓</div>
-  {% endfor %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h3> Отсутствующие сотрудники</h3>
+  <a href="{% url 'absence_report' %}" class="btn btn-primary">📝 Уведомить об отсутствии</a>
 </div>
+
+<!--  СЕЙЧАС ОТСУТСТВУЮТ -->
+<div class="card mb-4 border-danger">
+  <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
+    <h5 class="mb-0">🔴 Сейчас отсутствуют</h5>
+    <span class="badge bg-light text-danger">{{ current_absences.count }}</span>
+  </div>
+  <div class="card-body p-0">
+    {% if current_absences %}
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Сотрудник</th>
+            <th>Отдел</th>
+            <th>Причина</th>
+            <th>Период</th>
+            <th>Дней</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for absence in current_absences %}
+          <tr>
+            <td><strong>{{ absence.employee }}</strong></td>
+            <td>{{ absence.employee.department.name|default:"—" }}</td>
+            <td>
+              <!-- 🔥 Исправлено: маппинг под реальные значения из БД -->
+              {% if absence.reason == 'sick' %}
+                <span class="badge bg-danger"> Болезнь</span>
+              {% elif absence.reason == 'vacation' %}
+                <span class="badge bg-success">🌴 Отпуск</span>
+              {% elif absence.reason == 'business' %}
+                <span class="badge bg-info">✈️ Командировка</span>
+              {% elif absence.reason == 'other' %}
+                <span class="badge bg-secondary">📋 Другое</span>
+              {% else %}
+                <span class="badge bg-secondary">📋 {{ absence.reason|default:"Другое" }}</span>
+              {% endif %}
+              {% if absence.custom_reason %}<br><small class="text-muted">{{ absence.custom_reason }}</small>{% endif %}
+            </td>
+            <td>{{ absence.start_dt|date:"d.m" }} — {{ absence.end_dt|date:"d.m.Y" }}</td>
+            <td>
+              {% if absence.duration_days %}{{ absence.duration_days }} дн.{% else %}—{% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="text-center text-muted py-4">
+      <div class="fs-1">✅</div>
+      <p class="mb-0">Все сотрудники на месте</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- 🔮 ЗАПЛАНИРОВАНЫ -->
+{% if future_absences %}
+<div class="card mb-4 border-warning">
+  <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+    <h5 class="mb-0">🔮 Запланированы (следующие 14 дней)</h5>
+    <span class="badge bg-dark">{{ future_absences|length }}</span>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Сотрудник</th>
+            <th>Отдел</th>
+            <th>Причина</th>
+            <th>Начало</th>
+            <th>Окончание</th>
+            <th>Осталось дней</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in future_absences %}
+          {% with absence=item.absence %}
+          <tr class="table-warning">
+            <td><strong>{{ absence.employee }}</strong></td>
+            <td>{{ absence.employee.department.name|default:"—" }}</td>
+            <td>
+              {% if absence.reason == 'sick' %}
+                <span class="badge bg-danger">😷 Болезнь</span>
+              {% elif absence.reason == 'vacation' %}
+                <span class="badge bg-success">🌴 Отпуск</span>
+              {% elif absence.reason == 'business' %}
+                <span class="badge bg-info">✈️ Командировка</span>
+              {% elif absence.reason == 'other' %}
+                <span class="badge bg-secondary">📋 Другое</span>
+              {% else %}
+                <span class="badge bg-secondary">📋 {{ absence.reason|default:"Другое" }}</span>
+              {% endif %}
+              {% if absence.custom_reason %}<br><small class="text-muted">{{ absence.custom_reason }}</small>{% endif %}
+            </td>
+            <td>{{ absence.start_dt|date:"d.m.Y" }}</td>
+            <td>{{ absence.end_dt|date:"d.m.Y" }}</td>
+            <td>
+              {% if item.days_until == 1 %}
+                <strong class="text-danger">Завтра!</strong>
+              {% elif item.days_until <= 3 %}
+                <strong>{{ item.days_until }} дн.</strong>
+              {% else %}
+                {{ item.days_until }} дн.
+              {% endif %}
+            </td>
+          </tr>
+          {% endwith %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!--  ИСТОРИЯ -->
+{% if past_absences %}
+<div class="card mb-4">
+  <div class="card-header bg-light d-flex justify-content-between align-items-center">
+    <h5 class="mb-0">📜 Недавняя история</h5>
+    <small class="text-muted">Последние 10 записей</small>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-sm table-hover mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Сотрудник</th>
+            <th>Причина</th>
+            <th>Период</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for absence in past_absences %}
+          <tr class="text-muted">
+            <td>{{ absence.employee }}</td>
+            <td>
+              {% if absence.reason == 'sick' %}😷 Болезнь
+              {% elif absence.reason == 'vacation' %}🌴 Отпуск
+              {% elif absence.reason == 'other' %}
+                <span class="badge bg-secondary">📋 Другое</span>
+              {% else %}
+                <span class="badge bg-secondary">📋 {{ absence.reason|default:"Другое" }}</span>
+              {% endif %}
+            </td>
+            <td>{{ absence.start_dt|date:"d.m" }} — {{ absence.end_dt|date:"d.m.Y" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endif %}
 {% endblock %}

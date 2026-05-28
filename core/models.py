@@ -111,6 +111,14 @@ class AbsenceRecord(models.Model):
     end_dt = models.DateField(verbose_name='Дата окончания')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
 
+    @property
+    def duration_days(self):
+        """Возвращает количество дней отсутствия"""
+        if self.start_dt and self.end_dt:
+            delta = self.end_dt - self.start_dt
+            return delta.days + 1  # +1 чтобы включить оба дня
+        return 0
+    
     def __str__(self):
         return f"{self.employee} ({self.get_reason_display()})"
 

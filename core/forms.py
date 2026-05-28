@@ -1,80 +1,8 @@
-# from django import forms
-# from django.contrib.auth.forms import UserCreationForm
-# from .models import Employee, CalendarEvent, Announcement, AbsenceRecord, SupportTicket
-
-# class EmployeeRegistrationForm(UserCreationForm):
-#     class Meta:
-#         model = Employee
-#         fields = ('username', 'password1', 'password2', 'first_name', 'last_name', 
-#                   'phone_external', 'phone_internal', 'birth_date', 'office', 'department')
-
-# class ProfileForm(forms.ModelForm):
-#     class Meta:
-#         model = Employee
-#         fields = ('first_name', 'last_name', 'phone_external', 'phone_internal', 
-#                   'birth_date', 'office', 'department')
-
-# class CalendarEventForm(forms.ModelForm):
-#     class Meta:
-#         model = CalendarEvent
-#         fields = ('title', 'description', 'start_dt', 'end_dt', 'visibility', 'notify_before')
-#         labels = { 
-#             'title': 'Название события',
-#             'description': 'Описание',
-#             'start_dt': 'Дата и время начала',
-#             'end_dt': 'Дата и время окончания (необязательно)',
-#             'visibility': 'Видимость',
-#             'notify_before': 'Напоминать за',
-#         }
-#         widgets = {
-#             'start_dt': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
-#             'end_dt': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
-#         }
-
-# class AnnouncementForm(forms.ModelForm):
-#     class Meta:
-#         model = Announcement
-#         fields = ('text', 'scope', 'department')
-
-# class AbsenceForm(forms.ModelForm):
-#     class Meta:
-#         model = AbsenceRecord
-#         fields = ('reason', 'custom_reason', 'start_dt', 'end_dt')
-#         labels = {
-#             'reason': 'Причина отсутствия', 
-#             'custom_reason': 'Другая причина', 
-#             'start_dt':'Дата и время начала', 
-#             'end_dt':'Дата и время окончания'
-#         }
-#         widgets = {
-#             'start_dt': forms.DateInput(attrs={'type': 'date'}),
-#             'end_dt': forms.DateInput(attrs={'type': 'date'}),
-#         }
-
-# class SupportTicketForm(forms.ModelForm):
-#     class Meta:
-#         model = SupportTicket
-#         fields = ('message',)
-
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from .models import Employee, CalendarEvent, Announcement, AbsenceRecord, SupportTicket, Department, Role
+from datetime import time, datetime
 
-# class EmployeeRegistrationForm(UserCreationForm):
-#     class Meta:
-#         model = Employee
-#         fields = ('username', 'password1', 'password2', 'first_name', 'last_name', 'patronymic',
-#                   'phone_external', 'phone_internal', 'birth_date', 'office', 'department')
-#         labels = {
-#             'first_name': 'Имя',
-#             'last_name': 'Фамилия',
-#             'patronymic': 'Отчество',
-#             'phone_external': 'Внешний телефон',
-#             'phone_internal': 'Внутренний телефон',
-#             'birth_date': 'Дата рождения',
-#             'office': 'Кабинет',
-#             'department': 'Подразделение',
-#         }
 
 class EmployeeRegistrationForm(UserCreationForm):
     """Форма регистрации сотрудника (без выбора роли)"""
@@ -182,3 +110,105 @@ class SupportTicketForm(forms.ModelForm):
     class Meta:
         model = SupportTicket
         fields = ('message',)
+
+
+class EventForm(forms.ModelForm):
+    # 🔥 Явные поля для даты и времени (Django сам будет их валидировать)
+    start_date = forms.DateField(
+        label='Дата начала',
+        widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+        required=True
+    )
+    start_time = forms.TimeField(
+        label='Время начала',
+        widget=forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
+        initial='09:00'
+    )
+    end_date = forms.DateField(
+        label='Дата окончания',
+        widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+        required=False
+    )
+    end_time = forms.TimeField(
+        label='Время окончания',
+        widget=forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
+        initial='18:00'
+    )
+
+    class Meta:
+        model = CalendarEvent
+        fields = ['title', 'description', 'visibility']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Bootstrap-классы для основных полей
+        self.fields['title'].widget.attrs.update({'class': 'form-control', 'placeholder': 'Например: Совещание отдела'})
+        self.fields['description'].widget.attrs.update({'class': 'form-control', 'rows': 3})
+        self.fields['visibility'].widget.attrs.update({'class': 'form-select'})
+
+    def clean(self):
+        cleaned_data = super().clean()
+        
+        start_date = cleaned_data.get('start_date')
+        start_time = cleaned_data.get('start_time') or time(9, 0)
+        end_date = cleaned_data.get('end_date')
+        end_time = cleaned_data.get('end_time') or time(18, 0)
+
+        # 🛠 Собираем datetime объекты
+        if start_date:
+            try:
+                cleaned_data['start_dt'] = datetime.combine(start_date, start_time)
+            except Exception as e:
+                raise forms.ValidationError(f"Ошибка даты начала: {e}")
+
+        if end_date:
+            try:
+                cleaned_data['end_dt'] = datetime.combine(end_date, end_time)
+            except Exception as e:
+                raise forms.ValidationError(f"Ошибка даты окончания: {e}")
+
+        # ✅ Логическая проверка
+        if cleaned_data.get('start_dt') and cleaned_data.get('end_dt'):
+            if cleaned_data['end_dt'] < cleaned_data['start_dt']:
+                raise forms.ValidationError("Время окончания не может быть раньше времени начала")
+
+        return cleaned_data
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        instance.start_dt = self.cleaned_data.get('start_dt')
+        instance.end_dt = self.cleaned_data.get('end_dt')
+        if commit:
+            instance.save()
+        return instance
+# class EventForm(forms.ModelForm):
+#     class Meta:
+#         model = CalendarEvent
+#         fields = ['title', 'description', 'start_dt', 'end_dt', 'visibility']
+
+#     def __init__(self, *args, **kwargs):
+#         super().__init__(*args, **kwargs)
+        
+#         # 🔥 Принудительно задаём классы для всех полей
+#         self.fields['title'].widget.attrs.update({
+#             'class': 'form-control',
+#             'placeholder': 'Например: Совещание отдела'
+#         })
+#         self.fields['description'].widget.attrs.update({
+#             'class': 'form-control',
+#             'rows': 3,
+#             'placeholder': 'Дополнительная информация'
+#         })
+#         self.fields['start_dt'].widget.attrs.update({
+#             'class': 'form-control',
+#             'type': 'datetime-local'
+#         })
+#         self.fields['end_dt'].widget.attrs.update({
+#             'class': 'form-control',
+#             'type': 'datetime-local'
+#         })
+#         self.fields['visibility'].widget.attrs.update({
+#             'class': 'form-select'
+#         })
+
+

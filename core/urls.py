@@ -50,4 +50,8 @@ urlpatterns = [
     path('sup/management/', views.EmployeeManagementView.as_view(), name='employee_management'),
     path('vmeda/', views.VmedaInfoView.as_view(), name='vmeda_info'),
     path('analytics/', views.AnalyticsView.as_view(), name='analytics'),
+
+    path('sup/management/edit/<int:pk>/', views.EmployeeUpdateView.as_view(), name='employee_edit'),
+    path('sup/management/delete/<int:pk>/', views.EmployeeDeleteView.as_view(), name='employee_delete'),
+    
 ]

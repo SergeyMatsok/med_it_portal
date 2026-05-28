@@ -1,22 +1,77 @@
 {% extends 'core/base.html' %}
 {% block content %}
-<h3>📅 {% if object %}Редактировать{% else %}Добавить{% endif %} событие</h3>
+<div class="row">
+  <div class="col-lg-5 col-md-8">
+    <div class="card shadow-sm border-0 rounded-3">
+      <div class="card-body p-4">
+        <h3 class="mb-4">📅 {% if object %}Редактировать событие{% else %}Добавить событие{% endif %}</h3>
+        
+        <form method="post" novalidate>
+          {% csrf_token %}
 
-<form method="post" class="mt-4">
-  {% csrf_token %}
-  {% for field in form %}
-    <div class="mb-3">
-      <label class="form-label">{{ field.label }}</label>
-      {{ field }}
-      {% if field.errors %}
-        <div class="text-danger small">{{ field.errors.0 }}</div>
-      {% endif %}
-      {% if field.help_text %}
-        <small class="text-muted d-block">{{ field.help_text }}</small>
-      {% endif %}
+          {% if form.non_field_errors %}
+            <div class="alert alert-danger mb-3">{{ form.non_field_errors }}</div>
+          {% endif %}
+
+          <!-- Название -->
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Название события <span class="text-danger">*</span></label>
+            {{ form.title }}
+            {% if form.title.errors %}<div class="text-danger small mt-1">{{ form.title.errors.0 }}</div>{% endif %}
+          </div>
+
+          <!-- Описание -->
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Описание</label>
+            {{ form.description }}
+          </div>
+
+          <!-- 🔥 Дата и время начала (раздельно) -->
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Дата начала <span class="text-danger">*</span></label>
+              <input type="date" name="start_date" class="form-control" 
+                     value="{{ form.instance.start_dt|date:'Y-m-d'|default:'' }}" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Время начала</label>
+              <input type="time" name="start_time" class="form-control" value="09:00">
+            </div>
+          </div>
+
+          <!-- 🔥 Дата и время окончания (раздельно) -->
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Дата окончания</label>
+              <input type="date" name="end_date" class="form-control" 
+                     value="{{ form.instance.end_dt|date:'Y-m-d'|default:'' }}">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Время окончания</label>
+              <input type="time" name="end_time" class="form-control" value="18:00">
+            </div>
+          </div>
+
+          <!-- Видимость -->
+          <div class="mb-4">
+            <label class="form-label fw-semibold">Видимость</label>
+            {{ form.visibility }}
+          </div>
+
+          <!-- Кнопки -->
+          <div class="d-flex gap-2 pt-2">
+            <button type="submit" class="btn btn-primary fw-bold px-4">
+              {% if object %} Сохранить{% else %}➕ Добавить{% endif %}
+            </button>
+            <a href="{% url 'calendar' %}" class="btn btn-secondary px-4">❌ Отмена</a>
+          </div>
+        </form>
+      </div>
     </div>
-  {% endfor %}
-  <button type="submit" class="btn btn-primary">Сохранить</button>
-  <a href="{% url 'calendar' %}" class="btn btn-secondary">Отмена</a>
-</form>
+  </div>
+</div>
+
+<style>
+  .form-control, .form-select { width: 100% !important; box-sizing: border-box; }
+</style>
 {% endblock %}

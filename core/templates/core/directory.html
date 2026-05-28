@@ -73,8 +73,14 @@
           <!-- Действия (опционально) -->
           {% if user.role in 'adm,sup' %}
           <div class="d-flex gap-2 pt-2 border-top">
-            <a href="#" class="btn btn-sm btn-outline-primary flex-grow-1">✏️ Ред.</a>
-            <a href="#" class="btn btn-sm btn-outline-danger flex-grow-1">🗑️</a>
+            <a href="{% url 'employee_edit' emp.id %}" class="btn btn-sm btn-outline-primary flex-grow-1">
+              ✏️ Ред.
+            </a>
+            <a href="{% url 'employee_delete' emp.id %}" 
+               class="btn btn-sm btn-outline-danger flex-grow-1" 
+               onclick="return confirm('Вы уверены, что хотите удалить сотрудника {{ emp }}? Это действие нельзя отменить.');">
+              🗑️
+            </a>
           </div>
           {% endif %}
 
