@@ -6,7 +6,8 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.views import LoginView
 from django.db.models import Q
-from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
+from django.http import (FileResponse, HttpResponse, HttpResponseRedirect,
+                         JsonResponse)
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
 from django.utils import timezone
@@ -16,11 +17,11 @@ from django.views.generic import (CreateView, DeleteView, DetailView, FormView,
 
 from .forms import (AbsenceForm, AnnouncementForm, CalendarEventForm,
                     EmployeeRegistrationForm, EventForm, ProfileForm,
-                    SupportTicketForm)
+                    ReportForm, SupportTicketForm)
 from .mixins import RoleRequiredMixin
 from .models import (AbsenceRecord, Announcement, CalendarEvent, Department,
-                     Employee, InAppNotification, Role, SupportTicket,
-                     TicketReply, VmedaBrochure, VmedaInfoSection)
+                     Employee, InAppNotification, Report, Role, SupportTicket,
+                     TicketReply, VmedaBrochure, VmedaInfoSection, VmedaLink)
 
 
 class CustomLoginView(LoginView):
@@ -227,7 +228,7 @@ class AnnouncementListView(LoginRequiredMixin, ListView):
 
 
 class AnnouncementCreateView(RoleRequiredMixin, CreateView):
-    allowed_roles = [Role.ADM, Role.SUP, Role.SID]
+    allowed_roles = [Role.ADM, Role.SUP, Role.DEP, Role.SID]
     model = Announcement
     form_class = AnnouncementForm
     template_name = 'core/announcement_form.html'
@@ -469,11 +470,11 @@ class DepartmentsView(LoginRequiredMixin, TemplateView):
             })
             
         context['departments'] = depts
-        context['is_manager'] = self.request.user.role in [Role.ADM, Role.SUP]
+        context['is_manager'] = self.request.user.role in [Role.ADM, Role.SUP, Role.DEP]
         return context
     
     def post(self, request, *args, **kwargs):
-        if request.user.role not in [Role.ADM, Role.SUP]:
+        if request.user.role not in [Role.ADM, Role.SUP, Role.DEP]:
             messages.error(request, "❌ Недостаточно прав")
             return redirect('departments')
             
@@ -498,7 +499,7 @@ class EmployeeManagementView(LoginRequiredMixin, TemplateView):
     template_name = 'core/sup/employee_management.html'
     
     def dispatch(self, request, *args, **kwargs):
-        if request.user.role not in [Role.ADM, Role.SUP]:
+        if request.user.role not in [Role.ADM, Role.SUP, Role.DEP]:
             return redirect('dashboard')
         return super().dispatch(request, *args, **kwargs)
     
@@ -524,7 +525,7 @@ class EmployeeManagementView(LoginRequiredMixin, TemplateView):
             
             # Обновляем роль
             role = request.POST.get('role')
-            if role in [Role.USR, Role.SUP, Role.SID, Role.ADM]:
+            if role in [Role.USR, Role.SUP, Role.SID, Role.ADM, Role.DOC, Role.DEP]:
                 emp.role = role
             
             # Обновляем статус активности
@@ -536,19 +537,38 @@ class EmployeeManagementView(LoginRequiredMixin, TemplateView):
         return redirect('employee_management')
 
 
+# class VmedaInfoView(LoginRequiredMixin, TemplateView):
+#     """Usr-2.3: Страница ВМедА (теперь управляемая из БД)"""
+#     template_name = 'core/vmeda.html'
+    
+#     def get_context_data(self, **kwargs):
+#         context = super().get_context_data(**kwargs)
+#         # Получаем все разделы в правильном порядке
+#         context['sections'] = VmedaInfoSection.objects.all().order_by('order')
+#         # Получаем последний загруженный файл-памятку
+#         brochure = VmedaBrochure.objects.last()
+#         context['brochure'] = brochure
+#         return context
+# В core/views.py, в классе VmedaInfoView
+
 class VmedaInfoView(LoginRequiredMixin, TemplateView):
-    """Usr-2.3: Страница ВМедА (теперь управляемая из БД)"""
+    """Usr-2.3: Страница ВМедА"""
     template_name = 'core/vmeda.html'
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Получаем все разделы в правильном порядке
+        
+        # Разделы с текстом
         context['sections'] = VmedaInfoSection.objects.all().order_by('order')
-        # Получаем последний загруженный файл-памятку
+        
+        # 🔥 ДОБАВЛЕНО: Полезные ссылки
+        context['links'] = VmedaLink.objects.filter(is_active=True)
+        
+        # Файл-памятка
         brochure = VmedaBrochure.objects.last()
         context['brochure'] = brochure
+        
         return context
-
 
 class AnalyticsView(LoginRequiredMixin, TemplateView):
     template_name = 'core/analytics.html'
@@ -607,14 +627,24 @@ class EmployeeUpdateView(ManagerRequiredMixin, UpdateView):
             'phone_external', 
             'office', 
             'email', 
-            'is_active'
+            'is_active',
+            'role',
         ]
     template_name = 'core/employee_form.html' # Создайте этот шаблон или используйте существующий
     
     def get_success_url(self):
         # После сохранения возвращаем в справочник
         return reverse_lazy('directory')
-
+    
+    def form_invalid(self, form):
+        print(" ОШИБКИ ФОРМЫ:", form.errors)  # ← Покажет точную причину
+        return super().form_invalid(form)
+    # def form_valid(self, form):
+    #     # 🔥 Явно присваиваем роль из данных формы
+    #     if 'role' in form.cleaned_data:
+    #         form.instance.role = form.cleaned_data['role']
+    #         print(f"✅ Принудительно сохраняю роль: {form.instance.role}")
+    #     return super().form_valid(form)
 #  Удаление сотрудника
 class EmployeeDeleteView(ManagerRequiredMixin, DeleteView):
     model = Employee
@@ -645,6 +675,11 @@ def search_employees(request):
     #  Возвращаем HTML, а не JSON (HTMX вставляет ответ напрямую в DOM)
     return render(request, 'core/partials/search_dropdown.html', {'employees': employees})
 
+
+
+class DocClerkRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
+    def test_func(self):
+        return self.request.user.role == 'doc_clerk'
 
 @login_required
 @require_POST
@@ -684,6 +719,72 @@ def share_event(request, pk):
     return JsonResponse({'status': 'ok'})
 
 
+# class ReportListView(LoginRequiredMixin, ListView):
+#     model = Report
+#     template_name = 'core/report_list.html'
+#     context_object_name = 'reports'
+
+#     def get_queryset(self):
+#         qs = Report.objects.filter(is_active=True)
+#         # Делопроизводитель видит все, остальные — только свой отдел или общие
+#         if self.request.user.role != 'doc_clerk' and self.request.user.department:
+#             qs = qs.filter(department=self.request.user.department)
+#         return qs
+
+# class ReportDetailView(LoginRequiredMixin, DetailView):
+#     model = Report
+#     template_name = 'core/report_detail.html'
+#     context_object_name = 'report'
+
+# class ReportCreateView(DocClerkRequiredMixin, CreateView):
+#     model = Report
+#     form_class = ReportForm
+#     template_name = 'core/report_form.html'
+#     success_url = reverse_lazy('report_list')
+
+#     def form_valid(self, form):
+#         form.instance.author = self.request.user
+#         return super().form_valid(form)
+
+class ReportListView(LoginRequiredMixin, ListView):
+    model = Report
+    template_name = 'core/report_list.html'
+    context_object_name = 'reports'
+
+    def get_queryset(self):
+        # Все активные рапорты видят все
+        return Report.objects.filter(is_active=True).order_by('-created_at')
+
+class ReportDetailView(LoginRequiredMixin, DetailView):
+    model = Report
+    template_name = 'core/report_detail.html'
+    context_object_name = 'report'
+
+# 📝 СОЗДАНИЕ: ТОЛЬКО для делопроизводителя
+class ReportCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
+    model = Report
+    form_class = ReportForm
+    template_name = 'core/report_form.html'
+    success_url = reverse_lazy('report_list')
+
+    def test_func(self):
+        #  Разрешаем ТОЛЬКО если роль == 'doc_clerk'
+        return self.request.user.role == 'doc_clerk'
+
+    def handle_no_permission(self):
+        # Если зашёл не делопроизводитель → показываем сообщение и возвращаем в список
+        messages.error(self.request, '🚫 Доступ запрещён: добавлять рапорты может только делопроизводитель.')
+        return redirect('report_list')
+
+    def form_valid(self, form):
+        form.instance.author = self.request.user
+        return super().form_valid(form)
+# Отдельный View для скачивания (без HTML-обёртки)
+def download_report(request, pk):
+    report = get_object_or_404(Report, pk=pk, is_active=True)
+    response = FileResponse(report.file.open('rb'), as_attachment=True)
+    return response
+
 @login_required
 def api_search(request):
     """API: Живой поиск (HTML для шапки, JSON для модалок)"""
@@ -706,7 +807,7 @@ def api_search(request):
            (emp.department and q_lower in emp.department.name.lower())
     ][:8]
     
-    # 🔥 Если запрошен JSON (календарь) → отдаём JSON
+    #  Если запрошен JSON (календарь) → отдаём JSON
     if request.GET.get('format') == 'json':
         data = []
         for emp in results:
@@ -719,8 +820,10 @@ def api_search(request):
             })
         return JsonResponse(data, safe=False)
     
-    # 🔥 Иначе (шапка сайта) → отдаём HTML для HTMX
+    #  Иначе (шапка сайта) → отдаём HTML для HTMX
     return render(request, 'core/partials/search_dropdown.html', {'employees': results})
+
+
 
 
 @login_required

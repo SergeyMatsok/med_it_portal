@@ -508,40 +508,55 @@
   </nav>
 
   <!-- 📦 Основной контент -->
-  <div class="container">
-    {% if user.is_authenticated %}
-      <div class="row g-4">
-        <!-- 🧭 Боковое меню -->
-        <div class="col-md-3 col-lg-3">
-          <div class="list-group" id="sidebar-nav">
-            <a href="{% url 'dashboard' %}" class="list-group-item list-group-item-action {% if request.path == '/dashboard/' %}active{% endif %}">🏠 Главная</a>
-            <a href="{% url 'calendar' %}" class="list-group-item list-group-item-action {% if '/calendar/' in request.path %}active{% endif %}">📅 Календарь</a>
-            <a href="{% url 'directory' %}" class="list-group-item list-group-item-action {% if '/directory/' in request.path %}active{% endif %}">👥 Сотрудники</a>
-            <a href="{% url 'absences' %}" class="list-group-item list-group-item-action {% if request.path == '/absences/' %}active{% endif %}">📋 Отсутствующие</a>
-            <a href="{% url 'announcements' %}" class="list-group-item list-group-item-action {% if request.path == '/announcements/' %}active{% endif %}">📢 Оповещения</a>
-            {% if user.role in 'adm,sup,sid' %}
-              <a href="{% url 'announcement_create' %}" class="list-group-item list-group-item-action {% if request.path == '/announcements/create/' %}active{% endif %}">📤 Создать оповещение</a>
-            {% endif %}
-            <a href="{% url 'absence_report' %}" class="list-group-item list-group-item-action {% if request.path == '/absence/report/' %}active{% endif %}">📝 Уведомить об отсутствии</a>
-            <a href="{% url 'analytics' %}" class="list-group-item list-group-item-action {% if '/analytics/' in request.path %}active{% endif %}">📊 Аналитика</a>
-            <a href="{% url 'departments' %}" class="list-group-item list-group-item-action {% if '/departments/' in request.path %}active{% endif %}">🏢 Подразделения</a>
-            <a href="{% url 'vmeda_info' %}" class="list-group-item list-group-item-action {% if '/vmeda/' in request.path %}active{% endif %}">🏥 Справка ВМедА</a>
-            <a href="{% url 'ticket_list' %}" class="list-group-item list-group-item-action {% if '/it/' in request.path %}active{% endif %}">🆘 Заявки в IT</a>
-            {% if user.role in 'sup,adm' %}
-              <a href="{% url 'employee_management' %}" class="list-group-item list-group-item-action {% if '/sup/management/' in request.path %}active{% endif %}">⚙️ Управление</a>
-            {% endif %}
-          </div>
-        </div>
-        
-        <!-- 📄 Контент страницы -->
-        <div class="col-md-9 col-lg-9">
-          {% block content %}{% endblock %}
+<!-- 📦 Основной контент -->
+<div class="container">
+  {% if user.is_authenticated %}
+    <div class="row g-4">
+      <!-- 🧭 Боковое меню -->
+      <div class="col-md-3 col-lg-3">
+        <div class="list-group" id="sidebar-nav">
+          
+          <!--  Группа 1: Основное -->
+          <small class="text-muted text-uppercase fw-bold px-2 mt-2 mb-1 d-block">📌 Основное</small>
+          <a href="{% url 'dashboard' %}" class="list-group-item list-group-item-action {% if request.path == '/dashboard/' %}active{% endif %}">🏠 Главная</a>
+          <a href="{% url 'announcements' %}" class="list-group-item list-group-item-action {% if request.path == '/announcements/' %}active{% endif %}">📢 Оповещения</a>
+          <a href="{% url 'calendar' %}" class="list-group-item list-group-item-action {% if '/calendar/' in request.path %}active{% endif %}">📅 Календарь</a>
+          <a href="{% url 'absences' %}" class="list-group-item list-group-item-action {% if request.path == '/absences/' %}active{% endif %}">📋 Отсутствующие</a>
+
+          <!-- 👥 Группа 2: Сотрудники и структура -->
+          <small class="text-muted text-uppercase fw-bold px-2 mt-3 mb-1 d-block">👥 Сотрудники и структура</small>
+          <a href="{% url 'departments' %}" class="list-group-item list-group-item-action {% if '/departments/' in request.path %}active{% endif %}">🏢 Подразделения</a>
+          <a href="{% url 'directory' %}" class="list-group-item list-group-item-action {% if '/directory/' in request.path %}active{% endif %}">👥 Сотрудники</a>
+          <a href="{% url 'vmeda_info' %}" class="list-group-item list-group-item-action {% if '/vmeda/' in request.path %}active{% endif %}">🏥 Справка ВМедА</a>
+          <a href="{% url 'report_list' %}" class="list-group-item list-group-item-action {% if '/reports/' in request.path %}active{% endif %}">📂 Делопроизводство</a>
+
+          <!-- ⚡ Группа 3: Действия и сервисы -->
+          <small class="text-muted text-uppercase fw-bold px-2 mt-3 mb-1 d-block">⚡ Действия и сервисы</small>
+          {% if user.role in 'adm,sup,sid,dep' %}
+            <a href="{% url 'announcement_create' %}" class="list-group-item list-group-item-action {% if request.path == '/announcements/create/' %}active{% endif %}">📤 Создать оповещение</a>
+          {% endif %}
+          <a href="{% url 'absence_report' %}" class="list-group-item list-group-item-action {% if request.path == '/absence/report/' %}active{% endif %}">📝 Уведомить об отсутствии</a>
+          <a href="{% url 'analytics' %}" class="list-group-item list-group-item-action {% if '/analytics/' in request.path %}active{% endif %}">📊 Аналитика</a>
+          <a href="{% url 'ticket_list' %}" class="list-group-item list-group-item-action {% if '/it/' in request.path %}active{% endif %}">🆘 Заявки в IT</a>
+
+          <!--  Группа 4: Администрирование -->
+          {% if user.role in 'sup,adm' %}
+            <small class="text-muted text-uppercase fw-bold px-2 mt-3 mb-1 d-block">🔐 Администрирование</small>
+            <a href="{% url 'employee_management' %}" class="list-group-item list-group-item-action {% if '/sup/management/' in request.path %}active{% endif %}">⚙️ Управление</a>
+          {% endif %}
+
         </div>
       </div>
-    {% else %}
-      {% block public_content %}{% endblock %}
-    {% endif %}
-  </div>
+      
+      <!-- 📄 Контент страницы -->
+      <div class="col-md-9 col-lg-9">
+        {% block content %}{% endblock %}
+      </div>
+    </div>
+  {% else %}
+    {% block public_content %}{% endblock %}
+  {% endif %}
+</div>
 
   <!-- Bootstrap JS -->
   <script src="{% static 'vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>

@@ -1,7 +1,10 @@
+from datetime import datetime, time
+
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
-from .models import Employee, CalendarEvent, Announcement, AbsenceRecord, SupportTicket, Department, Role
-from datetime import time, datetime
+
+from .models import (AbsenceRecord, Announcement, CalendarEvent, Department,
+                     Employee, Report, Role, SupportTicket)
 
 
 class EmployeeRegistrationForm(UserCreationForm):
@@ -181,34 +184,18 @@ class EventForm(forms.ModelForm):
         if commit:
             instance.save()
         return instance
-# class EventForm(forms.ModelForm):
-#     class Meta:
-#         model = CalendarEvent
-#         fields = ['title', 'description', 'start_dt', 'end_dt', 'visibility']
 
-#     def __init__(self, *args, **kwargs):
-#         super().__init__(*args, **kwargs)
+
+class ReportForm(forms.ModelForm):
+    class Meta:
+        model = Report
+        fields = ['title', 'file', 'description', 'department']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['title'].widget.attrs.update({'class': 'form-control', 'placeholder': 'Например: Рапорт за май'})
+        self.fields['description'].widget.attrs.update({'class': 'form-control', 'rows': 3})
+        self.fields['department'].widget.attrs.update({'class': 'form-select'})
+        # FileField рендерится как input[type="file"], добавим класс
+        self.fields['file'].widget.attrs.update({'class': 'form-control'})
         
-#         # 🔥 Принудительно задаём классы для всех полей
-#         self.fields['title'].widget.attrs.update({
-#             'class': 'form-control',
-#             'placeholder': 'Например: Совещание отдела'
-#         })
-#         self.fields['description'].widget.attrs.update({
-#             'class': 'form-control',
-#             'rows': 3,
-#             'placeholder': 'Дополнительная информация'
-#         })
-#         self.fields['start_dt'].widget.attrs.update({
-#             'class': 'form-control',
-#             'type': 'datetime-local'
-#         })
-#         self.fields['end_dt'].widget.attrs.update({
-#             'class': 'form-control',
-#             'type': 'datetime-local'
-#         })
-#         self.fields['visibility'].widget.attrs.update({
-#             'class': 'form-select'
-#         })
-
-

@@ -1,11 +1,15 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.conf import settings
 
 class Role(models.TextChoices):
     ADM = 'adm', 'Администратор'
     SUP = 'sup', 'Начальник'
-    SID = 'sid', 'Руководитель подразделения'
+    DEP = 'dep', 'Заместитель начальника'
+    SID = 'sid', 'Руководитель направления'
+    DOC = 'doc_clerk', 'Делопроизводитель' 
     USR = 'usr', 'Сотрудник'
+    
 
 class Department(models.Model):
     name = models.CharField(max_length=100, verbose_name="Название")
@@ -30,9 +34,22 @@ class Employee(AbstractUser):
 
     patronymic = models.CharField(max_length=100, blank=True, verbose_name='Отчество')
     
-    role = models.CharField(max_length=3, choices=Role.choices, default=Role.USR, verbose_name='Роль')
-    department = models.ForeignKey(Department, null=True, blank=True, on_delete=models.SET_NULL, 
-                                   verbose_name='Подразделение', related_name='employees')
+    #  ИСПРАВЛЕНО: max_length=20, чтобы влезло 'doc_clerk' (было 3)
+    role = models.CharField(
+        max_length=20, 
+        choices=Role.choices, 
+        default=Role.USR, 
+        verbose_name='Роль'
+    )
+    
+    department = models.ForeignKey(
+        Department, 
+        null=True, 
+        blank=True, 
+        on_delete=models.SET_NULL, 
+        verbose_name='Подразделение', 
+        related_name='employees'
+    )
     office = models.CharField(max_length=50, blank=True, verbose_name='Кабинет')
     phone_external = models.CharField(max_length=20, blank=True, verbose_name='Внешний телефон')
     phone_internal = models.CharField(max_length=20, blank=True, verbose_name='Внутренний телефон')
@@ -40,24 +57,29 @@ class Employee(AbstractUser):
     is_active = models.BooleanField(default=True, verbose_name='Активен')
 
     def __str__(self):
-        # 👇 Отображение: "Иванов Иван Владимирович" или "Иванов Иван" если отчества нет
         parts = [self.last_name, self.first_name]
         if self.patronymic:
             parts.append(self.patronymic)
         return ' '.join(parts) or self.username
 
     def get_full_name_with_patronymic(self):
-        """Полное ФИО с отчеством (для шаблонов)"""
         if self.patronymic:
             return f"{self.last_name} {self.first_name} {self.patronymic}"
         return self.get_full_name()
 
+    # Свойства для быстрой проверки ролей
     @property
     def is_admin(self): return self.role == Role.ADM
+    
     @property
     def is_sup(self): return self.role == Role.SUP
+    
     @property
     def is_sid(self): return self.role == Role.SID
+    
+    #  ДОБАВЛЕНО: свойство для Делопроизводителя
+    @property
+    def is_doc(self): return self.role == Role.DOC
 
 class CalendarEvent(models.Model):
     VISIBILITY = [('private', 'Только я'), ('dept', 'Подразделение'), ('all', 'Весь отдел')]
@@ -219,3 +241,55 @@ class VmedaBrochure(models.Model):
 
     def __str__(self):
         return f"Памятка: {self.title}"
+    
+
+class Report(models.Model):
+    title = models.CharField("Название документа", max_length=255)
+    file = models.FileField("Файл", upload_to='reports/%Y/%m/')
+    description = models.TextField("Описание", blank=True)
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        editable=False,
+        verbose_name="Автор"
+    )
+    department = models.ForeignKey(
+        'Department', 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        verbose_name="Отдел"
+    )
+    created_at = models.DateTimeField("Дата создания", auto_now_add=True)
+    is_active = models.BooleanField("Активен", default=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "Рапорт"
+        verbose_name_plural = "Рапорты"
+
+    def __str__(self):
+        return self.title
+
+    @property
+    def file_extension(self):
+        return self.file.name.split('.')[-1].lower() if self.file else ''
+
+
+
+
+class VmedaLink(models.Model):
+    title = models.CharField("Название ссылки", max_length=200)
+    url = models.URLField("Адрес ссылки (URL)")
+    description = models.TextField("Описание (появится при раскрытии)", blank=True)
+    order = models.PositiveIntegerField("Порядок сортировки", default=0)
+    is_active = models.BooleanField("Активна", default=True)
+
+    class Meta:
+        verbose_name = 'Полезная ссылка'
+        verbose_name_plural = 'Полезные ссылки'
+        ordering = ['order', 'title']
+
+    def __str__(self):
+        return self.title

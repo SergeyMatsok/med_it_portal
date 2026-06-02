@@ -9,56 +9,65 @@
 
 <p class="text-muted mb-4">Справочная информация для сотрудников отдела МИТ</p>
 
-<!-- 📦 Блоки из базы данных -->
-<div class="row g-4">
-  {% for section in sections %}
-    <div class="col-md-6">
-      <div class="card h-100">
-        <div class="card-header d-flex justify-content-between align-items-center">
-          <h5 class="mb-0 fw-semibold">{{ section.title }}</h5>
-          <span class="badge bg-primary bg-opacity-10 text-primary">📄 Раздел</span>
+<!--  Полезные ссылки (ВВЕРХУ, СВЁРНУТЫ ПО УМОЛЧАНИЮ) -->
+{% if links %}
+<div class="accordion shadow-sm rounded mb-4" id="linksAccordion">
+  <div class="accordion-item border-0">
+    <h2 class="accordion-header" id="linksHeading">
+      <button class="accordion-button collapsed fw-semibold bg-light" type="button"
+              data-bs-toggle="collapse" data-bs-target="#linksCollapse"
+              aria-expanded="false" aria-controls="linksCollapse">
+        🔗 Полезные ссылки и ресурсы
+      </button>
+    </h2>
+    <div id="linksCollapse" class="accordion-collapse collapse"
+         aria-labelledby="linksHeading" data-bs-parent="#linksAccordion">
+      <div class="accordion-body bg-light">
+        <div class="row g-3">
+          {% for link in links %}
+            <div class="col-lg-4 col-md-6 col-12">
+              <a href="{{ link.url }}" target="_blank" class="card h-100 text-decoration-none border-0 shadow-sm hover-card">
+                <div class="card-body d-flex flex-column">
+                  <h6 class="card-title fw-semibold text-primary mb-2">{{ link.title }} ↗</h6>
+                  {% if link.description %}
+                    <p class="card-text small text-secondary mb-3 flex-grow-1">{{ link.description|truncatewords:15 }}</p>
+                  {% endif %}
+                  <span class="btn btn-sm btn-outline-primary mt-auto">Перейти</span>
+                </div>
+              </a>
+            </div>
+          {% endfor %}
         </div>
-        <div class="card-body">
-          <p class="card-text text-muted mb-0" style="white-space: pre-line;">
-            {{ section.content }}
-          </p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- 📖 Текстовые разделы справки (СВЁРНУТЫ ПО УМОЛЧАНИЮ) -->
+<div class="accordion shadow-sm rounded" id="vmedaAccordion">
+  {% for section in sections %}
+    <div class="accordion-item border-0 mb-2">
+      <h2 class="accordion-header" id="heading{{ section.id }}">
+        <button class="accordion-button collapsed fw-semibold" type="button"
+                data-bs-toggle="collapse" data-bs-target="#collapse{{ section.id }}"
+                aria-expanded="false" aria-controls="collapse{{ section.id }}">
+          📘 {{ section.title }}
+        </button>
+      </h2>
+      <div id="collapse{{ section.id }}" class="accordion-collapse collapse"
+           aria-labelledby="heading{{ section.id }}" data-bs-parent="#vmedaAccordion">
+        <div class="accordion-body text-secondary">
+          {{ section.content|linebreaks }}
         </div>
       </div>
     </div>
   {% empty %}
-    <div class="col-12">
-      <div class="alert alert-warning d-flex align-items-center">
-        <span class="me-2">⚠️</span>
-        <div>Информация временно недоступна. Обратитесь в техподдержку.</div>
-      </div>
+    <div class="text-center py-5 text-muted">
+      <div class="fs-1 mb-2"></div>
+      <p>Информация по ВМедА пока не добавлена</p>
     </div>
   {% endfor %}
-</div>
-
-<!-- 🔗 Полезные ссылки -->
-<div class="card mt-4">
-  <div class="card-header">
-    <h5 class="mb-0 fw-semibold">🔗 Полезные ссылки</h5>
-  </div>
-  <div class="card-body">
-    <div class="row g-3">
-      <div class="col-md-4 col-sm-6">
-        <a href="http://www.vmeda.local/" target="_blank" class="btn btn-outline-primary w-100 py-2">
-          🌐 Официальный сайт ВМедА
-        </a>
-      </div>
-      <div class="col-md-4 col-sm-6">
-        <a href="{% url 'directory' %}" class="btn btn-outline-secondary w-100 py-2">
-          👥 Сотрудники
-        </a>
-      </div>
-      <div class="col-md-4 col-sm-6">
-        <a href="{% url 'ticket_list' %}" class="btn btn-outline-danger w-100 py-2">
-          🆘 Заявка в ИТ
-        </a>
-      </div>
-    </div>
-  </div>
 </div>
 
 <!-- 📥 Скачать памятку -->
@@ -69,16 +78,17 @@
       <div class="display-4">📄</div>
       <div>
         <h6 class="mb-1 fw-semibold">Скачать памятку сотрудника</h6>
-        <p class="text-muted small mb-0">
-          Обновлено: <strong>{{ brochure.uploaded_at|date:"d.m.Y" }}</strong>
-        </p>
+        <p class="text-muted small mb-0">Обновлено: <strong>{{ brochure.uploaded_at|date:"d.m.Y" }}</strong></p>
       </div>
     </div>
-    <a href="{{ brochure.file.url }}" class="btn btn-primary px-4 py-2" download>
-      ⬇️ Скачать PDF
-    </a>
+    <a href="{{ brochure.file.url }}" class="btn btn-primary px-4 py-2" download>⬇️ Скачать PDF</a>
   </div>
 </div>
 {% endif %}
 
+<style>
+  .hover-card { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+  .hover-card:hover { transform: translateY(-3px); box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15) !important; }
+  .hover-card.text-decoration-none:hover { text-decoration: none !important; }
+</style>
 {% endblock %}

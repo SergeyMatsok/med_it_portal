@@ -1,10 +1,10 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import (
-    Employee, CalendarEvent, Announcement, 
-    AbsenceRecord, SupportTicket, TicketReply, InAppNotification, Department
-)
-from .models import VmedaInfoSection, VmedaBrochure
+
+from .models import (AbsenceRecord, Announcement, CalendarEvent, Department,
+                     Employee, InAppNotification, SupportTicket, TicketReply,
+                     VmedaBrochure, VmedaInfoSection, VmedaLink)
+
 
 @admin.register(Employee)
 class EmployeeAdmin(UserAdmin):
@@ -147,3 +147,10 @@ class VmedaBrochureAdmin(admin.ModelAdmin):
             return f'<a href="{obj.file.url}" target="_blank">Скачать текущий</a>'
         return '—'
     file_link.allow_tags = True
+
+
+@admin.register(VmedaLink)
+class VmedaLinkAdmin(admin.ModelAdmin):
+    list_display = ('title', 'url', 'order', 'is_active')
+    list_editable = ('order', 'is_active')
+    search_fields = ('title', 'url')

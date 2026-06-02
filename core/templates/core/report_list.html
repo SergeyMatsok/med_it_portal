@@ -1,0 +1,37 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h3>📂 Делопроизводство</h3>
+  {% if user.role == 'doc_clerk' %}
+    <a href="{% url 'report_create' %}" class="btn btn-primary"> Добавить рапорт</a>
+  {% endif %}
+</div>
+
+<div class="row g-3">
+  {% for report in reports %}
+    <div class="col-md-6 col-lg-4">
+      <div class="card h-100 shadow-sm border-0 hover-card">
+        <div class="card-body">
+          <h5 class="card-title fw-bold">{{ report.title }}</h5>
+          <p class="text-muted small mb-2">
+            📅 {{ report.created_at|date:"d.m.Y" }} • 👤 {{ report.author }}
+            {% if report.department %}<br>🏢 {{ report.department.name }}{% endif %}
+          </p>
+          {% if report.description %}
+            <p class="card-text small">{{ report.description|truncatewords:15 }}</p>
+          {% endif %}
+        </div>
+        <div class="card-footer bg-white border-0 d-flex gap-2">
+          <a href="{% url 'report_detail' report.id %}" class="btn btn-sm btn-outline-primary flex-grow-1">👁️ Открыть</a>
+          <a href="{% url 'report_download' report.id %}" class="btn btn-sm btn-outline-success flex-grow-1">⬇️ Скачать</a>
+        </div>
+      </div>
+    </div>
+  {% empty %}
+    <div class="col-12 text-center py-5 text-muted">
+      <div class="fs-1">📄</div>
+      <p>Рапорты пока не добавлены</p>
+    </div>
+  {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,47 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="card shadow-sm border-0">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h4 class="mb-0">{{ report.title }}</h4>
+        <a href="{% url 'report_list' %}" class="btn btn-sm btn-secondary">← Назад</a>
+      </div>
+      <div class="card-body">
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <strong>📅 Дата:</strong> {{ report.created_at|date:"d.m.Y H:i" }}
+          </div>
+          <div class="col-md-6">
+            <strong> Автор:</strong> {{ report.author }}
+          </div>
+          {% if report.department %}
+          <div class="col-md-6 mt-2">
+            <strong>🏢 Отдел:</strong> {{ report.department.name }}
+          </div>
+          {% endif %}
+        </div>
+        
+        {% if report.description %}
+          <div class="mb-4 p-3 bg-light rounded">
+            <strong>📝 Описание:</strong><br>
+            {{ report.description|linebreaks }}
+          </div>
+        {% endif %}
+
+        <div class="d-grid gap-2">
+          <a href="{% url 'report_download' report.id %}" class="btn btn-success btn-lg">
+            ⬇️ Скачать файл ({{ report.file_extension|upper }})
+          </a>
+          
+          {% if report.file_extension in 'pdf,jpg,jpeg,png,doc,docx' %}
+            <div class="mt-3 border rounded p-2 bg-light text-center">
+              <small class="text-muted d-block mb-2">Предпросмотр недоступен в браузере. Используйте кнопку скачивания.</small>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -53,5 +53,11 @@ urlpatterns = [
 
     path('sup/management/edit/<int:pk>/', views.EmployeeUpdateView.as_view(), name='employee_edit'),
     path('sup/management/delete/<int:pk>/', views.EmployeeDeleteView.as_view(), name='employee_delete'),
+
+        # === Делопроизводство ===
+    path('reports/', views.ReportListView.as_view(), name='report_list'),
+    path('reports/create/', views.ReportCreateView.as_view(), name='report_create'),
+    path('reports/<int:pk>/', views.ReportDetailView.as_view(), name='report_detail'),
+    path('reports/<int:pk>/download/', views.download_report, name='report_download'),
     
 ]
